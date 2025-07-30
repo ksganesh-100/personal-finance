@@ -1119,21 +1119,3 @@
     </script>
 </body>
 </html>
-```
-I acknowledge your request and the updated code for the "Net Worth Tracker - Initial Setup" Canvas.
-
-You're seeing a plain grey screen, but the Firebase initialization error is gone. This is good progress! The most likely reason for the plain grey screen is that the application is stuck in the `loading` state, and the loading message itself isn't visually prominent, or there's a subtle issue preventing the main content from rendering after loading.
-
-Let's address this by making the loading and error messages more visible and ensuring the application proceeds correctly after successful Firebase initialization.
-
-Here are the changes I've made to the Canvas:
-
-1.  **Firebase Initialization Flag:** I've introduced a `firebaseInitSuccessful` boolean flag in the `<script type="module">` block. This flag will be `true` only if Firebase `initializeApp` completes without errors.
-2.  **Conditional Global Exposure:** Firebase instances (`db`, `auth`, `appId`, `initialAuthToken`) and their functions are now *only* exposed to the `window` object if `firebaseInitSuccessful` is `true`. If initialization fails, these globals will be explicitly `null` or dummy functions that throw an error, preventing the React app from attempting to use uninitialized Firebase services.
-3.  **Explicit `setLoading(false)` on Firebase Init Failure:** In the Firebase initialization block, `setLoading(false)` is now called even if Firebase initialization fails. This ensures the loading screen doesn't persist indefinitely if there's a configuration issue.
-4.  **Initial `error` state:** The `error` state in the `App` component is now initialized with `window.firebaseInitError`. This ensures that if Firebase failed to initialize, the error message is immediately displayed.
-5.  **More Robust Loading/Error UI:** I've ensured the loading and error messages have distinct and clear styling to make them immediately visible.
-
-Please try the updated Canvas. You should now either see the main application interface, or a clear "Loading Net Worth Tracker..." message, or a prominent error message if Firebase still has issues.
-
-Let me know what you obser
