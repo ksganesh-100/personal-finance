@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net Worth Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6; /* Light gray background */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        #root {
+            width: 100%;
+            max-width: 1200px; /* Max width for content */
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- React and ReactDOM CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX transformation in the browser (for vibe coding) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Firebase CDN -->
+    <script type="module">
+        // Firebase SDK imports - adjust as needed for specific services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        let app;
+        let db;
+        let auth;
+
+        // Check if firebaseConfig is valid before initializing
+        if (firebaseConfig && firebaseConfig.projectId) {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                console.log("Firebase initialized successfully.");
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                // Set a global error message if Firebase init fails
+                window.firebaseInitError = "Failed to initialize Firebase. Check console for details.";
+            }
+        } else {
+            console.error("Firebase configuration (projectId) is missing or invalid. Firebase will not be initialized.");
+            window.firebaseInitError = "Firebase configuration is missing. Please ensure projectId is provided.";
+        }
+
+
+        // Make Firebase instances and functions available globally for the Babel script
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+        window.initialAuthToken = initialAuthToken;
+
+        window.collection = collection;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDocs = getDocs;
+        window.onSnapshot = onSnapshot;
+        window.addDoc = addDoc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.query = query;
+        window.where = where;
+        window.signInAnonymously = signInAnonymously;
+        window.signInWithCustomToken = signInWithCustomToken;
+        window.onAuthStateChanged = onAuthStateChanged;
+
+    </script>
+
+    <!-- Recharts CDN (UMD build) - must be loaded after React/ReactDOM and before your App script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/recharts.min.js"></script>
+    <!-- Lucide React CDN (UMD build) - must be loaded after React/ReactDOM and before your App script -->
+    <!-- Note: A direct UMD build for lucide-react might not be readily available or might require specific imports.
+         The inline SVG fallback is used below for simplicity if a direct CDN import is not straightforward.
+         For full Lucide React, typically you'd npm install and import.
+         For this vibe coding, the inline SVG fallback for icons is practical.
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide-react@0.364.0/dist/umd/lucide-react.min.js"></script>
+
+    <!-- React App Component (JSX will be transformed by Babel) -->
+    <!-- This script type="text/babel" tells the browser to process JSX -->
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // Access Recharts components directly from window.Recharts
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } = window.Recharts || {};
+
+        // Fallback for Lucide React icons using inline SVGs
+        // Removed direct destructuring from window.LucideReact as it causes issues with CDN UMD builds.
+        const Icon = ({ name, ...props }) => {
+            const icons = {
+                DollarSign: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>,
+                Euro: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 10h12"></path><path d="M4 14h9"></path><path d="M19 6a7.7 7.7 0 0 0-5.2-1.8H4"></path><path d="M19 18a7.7 7.7 0 0 1-5.2 1.8H4"></path></svg>,
+                IndianRupee: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 3h12"></path><path d="M6 8h12"></path><path d="M6 13h12"></path><path d="M6 18h12"></path><path d="M12 3v18"></path></svg>,
+                Plus: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>,
+                Minus: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M5 12h14"></path></svg>,
+                Edit: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
+                Trash2: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>,
+                LayoutGrid: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>,
+                BarChart: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>,
+                CircleDollarSign: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 2v20"></path></svg>
+            };
+            return icons[name] || null;
+        };
+
+
+        // Exchange rates (simplified, hardcoded for now as per PRD)
+        const EXCHANGE_RATES = {
+            USD_TO_INR: 83.5,
+            EUR_TO_INR: 90.0,
+            INR_TO_USD: 1 / 83.5,
+            INR_TO_EUR: 1 / 90.0,
+            USD_TO_EUR: 0.92, // Example
+            EUR_TO_USD: 1 / 0.92 // Example
+        };
+
+        // Function to convert value to a target currency
+        const convertCurrency = (value, fromCurrency, toCurrency) => {
+            if (fromCurrency === toCurrency) {
+                return value;
+            }
+
+            // Convert everything to INR first, then to target currency
+            let valueInINR = value;
+            if (fromCurrency === 'USD') {
+                valueInINR = value * EXCHANGE_RATES.USD_TO_INR;
+            } else if (fromCurrency === 'EUR') {
+                valueInINR = value * EXCHANGE_RATES.EUR_TO_INR;
+            }
+
+            if (toCurrency === 'INR') {
+                return valueInINR;
+            } else if (toCurrency === 'USD') {
+                return valueInINR * EXCHANGE_RATES.INR_TO_USD;
+            } else if (toCurrency === 'EUR') {
+                return valueInINR * EXCHANGE_RATES.INR_TO_EUR;
+            }
+            return value; // Should not happen
+        };
+
+        const App = () => {
+            const [user, setUser] = useState(null);
+            const [assets, setAssets] = useState([]);
+            const [transactions, setTransactions] = useState([]);
+            const [netWorthSnapshots, setNetWorthSnapshots] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(window.firebaseInitError || null); // Initialize with Firebase init error
+            const [showAddAssetModal, setShowAddAssetModal] = useState(false);
+            const [newAssetName, setNewAssetName] = useState('');
+            const [newAssetValue, setNewAssetValue] = useState('');
+            const [newAssetCurrency, setNewAssetCurrency] = useState('INR');
+            const [newAssetGroup, setNewAssetGroup] = useState('');
+            const [primaryDisplayCurrency, setPrimaryDisplayCurrency] = useState('INR'); // Default primary currency
+
+            const [showTransactionModal, setShowTransactionModal] = useState(false);
+            const [selectedAsset, setSelectedAsset] = useState(null);
+            const [transactionAmount, setTransactionAmount] = useState('');
+            const [transactionType, setTransactionType] = useState('add'); // 'add' or 'subtract'
+            const [transactionDescription, setTransactionDescription] = useState('');
+            const [transactionAbsoluteValue, setTransactionAbsoluteValue] = useState(''); // For absolute value update
+
+            const [showEditAssetModal, setShowEditAssetModal] = useState(false);
+            const [editAssetId, setEditAssetId] = useState(null);
+            const [editAssetName, setEditAssetName] = useState('');
+            const [editAssetGroup, setEditAssetGroup] = useState('');
+
+            // Available asset groups (can be dynamically populated from existing assets later)
+            const assetGroups = ['Banks', 'Equities', 'Real Estate', 'Crypto', 'Other'];
+
+            // --- Firebase Initialization and Auth ---
+            useEffect(() => {
+                // If there's a Firebase initialization error, don't proceed with auth/data fetching
+                if (window.firebaseInitError) {
+                    setLoading(false);
+                    return;
+                }
+
+                // Access global instances
+                const authInstance = window.auth;
+                const initialAuthToken = window.initialAuthToken;
+
+                const unsubscribe = window.onAuthStateChanged(authInstance, async (currentUser) => {
+                    if (currentUser) {
+                        setUser(currentUser);
+                        console.log("User authenticated:", currentUser.uid);
+                        // Fetch data only after user is authenticated
+                        await fetchData(currentUser.uid);
+                    } else {
+                        console.log("No user signed in. Attempting anonymous sign-in...");
+                        try {
+                            if (initialAuthToken) {
+                                await window.signInWithCustomToken(authInstance, initialAuthToken);
+                                console.log("Signed in with custom token.");
+                            } else {
+                                await window.signInAnonymously(authInstance);
+                                console.log("Signed in anonymously.");
+                            }
+                        } catch (err) {
+                            console.error("Firebase Auth Error:", err);
+                            setError("Failed to authenticate. Please try again.");
+                            setLoading(false);
+                        }
+                    }
+                });
+
+                return () => unsubscribe(); // Cleanup auth listener
+            }, []);
+
+            // --- Data Fetching and Real-time Listeners ---
+            const fetchData = useCallback(async (uid) => {
+                // Access global instances
+                const dbInstance = window.db;
+                const appId = window.appId;
+                const collection = window.collection;
+                const query = window.query;
+                const onSnapshot = window.onSnapshot;
+                const where = window.where;
+                const getDocs = window.getDocs;
+                const doc = window.doc;
+                const deleteDoc = window.deleteDoc;
+                const addDoc = window.addDoc;
+                const updateDoc = window.updateDoc;
+
+
+                if (!dbInstance || !uid) {
+                    setError("Database or User ID not available.");
+                    setLoading(false);
+                    return;
+                }
+
+                setLoading(true);
+                setError(null);
+
+                try {
+                    // Assets listener
+                    const assetsCollectionRef = collection(dbInstance, `artifacts/${appId}/users/${uid}/assets`);
+                    const assetsQuery = query(assetsCollectionRef); // No orderBy to avoid index issues
+
+                    onSnapshot(assetsQuery, (snapshot) => {
+                        const fetchedAssets = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        setAssets(fetchedAssets);
+                        console.log("Assets updated:", fetchedAssets);
+                        setLoading(false);
+                    }, (err) => {
+                        console.error("Error fetching assets:", err);
+                        setError("Failed to load assets.");
+                        setLoading(false);
+                    });
+
+                    // Transactions listener
+                    const transactionsCollectionRef = collection(dbInstance, `artifacts/${appId}/users/${uid}/transactions`);
+                    const transactionsQuery = query(transactionsCollectionRef); // No orderBy
+
+                    onSnapshot(transactionsQuery, (snapshot) => {
+                        const fetchedTransactions = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        // Sort transactions by timestamp descending for display
+                        fetchedTransactions.sort((a, b) => b.timestamp - a.timestamp);
+                        setTransactions(fetchedTransactions);
+                        console.log("Transactions updated:", fetchedTransactions);
+                    }, (err) => {
+                        console.error("Error fetching transactions:", err);
+                        setError("Failed to load transactions.");
+                    });
+
+                    // Net Worth Snapshots listener
+                    const netWorthSnapshotsCollectionRef = collection(dbInstance, `artifacts/${appId}/users/${uid}/netWorthSnapshots`);
+                    const snapshotsQuery = query(netWorthSnapshotsCollectionRef); // No orderBy
+
+                    onSnapshot(snapshotsQuery, (snapshot) => {
+                        const fetchedSnapshots = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        // Sort snapshots by timestamp ascending for charting
+                        fetchedSnapshots.sort((a, b) => a.timestamp - b.timestamp);
+                        setNetWorthSnapshots(fetchedSnapshots);
+                        console.log("Net worth snapshots updated:", fetchedSnapshots);
+                    }, (err) => {
+                        console.error("Error fetching net worth snapshots:", err);
+                        setError("Failed to load net worth history.");
+                    });
+
+                } catch (err) {
+                    console.error("Error in fetchData:", err);
+                    setError("An unexpected error occurred while fetching data.");
+                    setLoading(false);
+                }
+            }, []); // Dependencies removed as global variables are accessed via window
+
+            // Effect to trigger fetchData when user object is set after authentication
+            useEffect(() => {
+                if (user && window.db) { // Ensure user and db are available
+                    fetchData(user.uid);
+                }
+            }, [user, fetchData]); // Depend on user and fetchData
+
+            // --- Asset Operations ---
+            const handleAddAsset = async () => {
+                if (!user || !window.db) {
+                    setError("User not authenticated or database not ready.");
+                    return;
+                }
+                if (!newAssetName || !newAssetValue || isNaN(parseFloat(newAssetValue)) || parseFloat(newAssetValue) <= 0) {
+                    setError("Please enter a valid asset name and a positive numeric value.");
+                    return;
+                }
+
+                try {
+                    const assetsCollectionRef = window.collection(window.db, `artifacts/${window.appId}/users/${user.uid}/assets`);
+                    await window.addDoc(assetsCollectionRef, {
+                        name: newAssetName,
+                        value: parseFloat(newAssetValue),
+                        currency: newAssetCurrency,
+                        group: newAssetGroup || 'Other', // Default to 'Other' if not specified
+                        createdAt: Date.now(),
+                        updatedAt: Date.now()
+                    });
+                    setNewAssetName('');
+                    setNewAssetValue('');
+                    setNewAssetCurrency('INR');
+                    setNewAssetGroup('');
+                    setShowAddAssetModal(false);
+                    setError(null);
+                } catch (err) {
+                    console.error("Error adding asset:", err);
+                    setError("Failed to add asset.");
+                }
+            };
+
+            const handleUpdateAssetValue = async () => {
+                if (!user || !window.db || !selectedAsset) {
+                    setError("User not authenticated, database not ready, or no asset selected.");
+                    return;
+                }
+
+                let newValue;
+                let amountChanged;
+                let transactionDescriptionText = transactionDescription;
+
+                if (transactionAbsoluteValue !== '') {
+                    // Update to absolute value
+                    const absoluteVal = parseFloat(transactionAbsoluteValue);
+                    if (isNaN(absoluteVal) || absoluteVal < 0) {
+                        setError("Please enter a valid non-negative absolute value.");
+                        return;
+                    }
+                    amountChanged = absoluteVal - selectedAsset.value;
+                    newValue = absoluteVal;
+                    transactionDescriptionText = transactionDescriptionText || `Updated to absolute value ${absoluteVal.toFixed(2)}`;
+                } else {
+                    // Add/subtract transaction
+                    const amount = parseFloat(transactionAmount);
+                    if (isNaN(amount) || amount <= 0) {
+                        setError("Please enter a valid positive amount for the transaction.");
+                        return;
+                    }
+
+                    if (transactionType === 'add') {
+                        newValue = selectedAsset.value + amount;
+                        amountChanged = amount;
+                        transactionDescriptionText = transactionDescriptionText || `Added ${amount.toFixed(2)} to ${selectedAsset.name}`;
+                    } else { // subtract
+                        newValue = selectedAsset.value - amount;
+                        amountChanged = -amount;
+                        transactionDescriptionText = transactionDescriptionText || `Subtracted ${amount.toFixed(2)} from ${selectedAsset.name}`;
+                    }
+
+                    if (newValue < 0) {
+                        setError("Asset value cannot go below zero.");
+                        return;
+                    }
+                }
+
+                try {
+                    const assetDocRef = window.doc(window.db, `artifacts/${window.appId}/users/${user.uid}/assets`, selectedAsset.id);
+                    await window.updateDoc(assetDocRef, {
+                        value: newValue,
+                        updatedAt: Date.now()
+                    });
+
+                    // Record transaction
+                    const transactionsCollectionRef = window.collection(window.db, `artifacts/${window.appId}/users/${user.uid}/transactions`);
+                    await window.addDoc(transactionsCollectionRef, {
+                        assetId: selectedAsset.id,
+                        assetName: selectedAsset.name,
+                        oldValue: selectedAsset.value,
+                        newValue: newValue,
+                        amountChanged: amountChanged,
+                        type: transactionAbsoluteValue !== '' ? 'absolute_update' : transactionType,
+                        description: transactionDescriptionText,
+                        timestamp: Date.now()
+                    });
+
+                    // Clear transaction form
+                    setTransactionAmount('');
+                    setTransactionDescription('');
+                    setTransactionAbsoluteValue('');
+                    setShowTransactionModal(false);
+                    setSelectedAsset(null);
+                    setError(null);
+                } catch (err) {
+                    console.error("Error updating asset value or recording transaction:", err);
+                    setError("Failed to update asset value or record transaction.");
+                }
+            };
+
+            const handleEditAsset = async () => {
+                if (!user || !window.db || !editAssetId) {
+                    setError("User not authenticated or database not ready.");
+                    return;
+                }
+                if (!editAssetName) {
+                    setError("Asset name cannot be empty.");
+                    return;
+                }
+
+                try {
+                    const assetDocRef = window.doc(window.db, `artifacts/${window.appId}/users/${user.uid}/assets`, editAssetId);
+                    await window.updateDoc(assetDocRef, {
+                        name: editAssetName,
+                        group: editAssetGroup || 'Other',
+                        updatedAt: Date.now()
+                    });
+                    setShowEditAssetModal(false);
+                    setEditAssetId(null);
+                    setEditAssetName('');
+                    setEditAssetGroup('');
+                    setError(null);
+                } catch (err) {
+                    console.error("Error editing asset:", err);
+                    setError("Failed to edit asset.");
+                }
+            };
+
+            const handleDeleteAsset = async (assetId) => {
+                if (!user || !window.db) {
+                    setError("User not authenticated or database not ready.");
+                    return;
+                }
+                // Implement a confirmation dialog instead of alert
+                if (!window.confirm("Are you sure you want to delete this asset and all its associated transactions?")) {
+                    return;
+                }
+
+                try {
+                    // Delete asset document
+                    await window.deleteDoc(window.doc(window.db, `artifacts/${window.appId}/users/${user.uid}/assets`, assetId));
+
+                    // Optionally, delete associated transactions (more complex, might need a batch delete or query)
+                    const transactionsRef = window.collection(window.db, `artifacts/${window.appId}/users/${user.uid}/transactions`);
+                    const q = window.query(transactionsRef, window.where("assetId", "==", assetId));
+                    const querySnapshot = await window.getDocs(q);
+                    // Firestore batch for multiple deletes - note: db.batch() is not exported globally from the CDN.
+                    // For vibe coding, we'll do individual deletes for simplicity, or if batch is needed, it would require a local setup.
+                    // For now, let's assume individual deletes are acceptable.
+                    querySnapshot.forEach(async (doc) => {
+                        await window.deleteDoc(doc.ref);
+                    });
+
+
+                    setError(null);
+                } catch (err) {
+                    console.error("Error deleting asset:", err);
+                    setError("Failed to delete asset.");
+                }
+            };
+
+            // --- Net Worth Calculation and Snapshot ---
+            const calculateTotalNetWorth = useCallback(() => {
+                let total = 0;
+                assets.forEach(asset => {
+                    total += convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
+                });
+                return total;
+            }, [assets, primaryDisplayCurrency]);
+
+            // Periodically save net worth snapshot (e.g., daily or on significant changes)
+            // For simplicity, let's add a manual "Take Snapshot" button for now,
+            // or integrate it with a transaction.
+            const takeNetWorthSnapshot = async () => {
+                if (!user || !window.db) {
+                    setError("User not authenticated or database not ready.");
+                    return;
+                }
+                try {
+                    const totalNetWorth = calculateTotalNetWorth();
+                    const snapshotsCollectionRef = window.collection(window.db, `artifacts/${window.appId}/users/${user.uid}/netWorthSnapshots`);
+                    await window.addDoc(snapshotsCollectionRef, {
+                        totalNetWorth: totalNetWorth,
+                        currency: primaryDisplayCurrency,
+                        timestamp: Date.now()
+                    });
+                    setError(null);
+                } catch (err) {
+                    console.error("Error taking net worth snapshot:", err);
+                    setError("Failed to take net worth snapshot.");
+                }
+            };
+
+            // Calculate asset allocation for the pie chart
+            const getAssetAllocationData = useCallback(() => {
+                const allocation = {};
+                assets.forEach(asset => {
+                    const valueInPrimary = convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
+                    allocation[asset.group] = (allocation[asset.group] || 0) + valueInPrimary;
+                });
+
+                return Object.keys(allocation).map(group => ({
+                    name: group,
+                    value: allocation[group]
+                }));
+            }, [assets, primaryDisplayCurrency]);
+
+            const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF19A3']; // Colors for pie chart
+
+            if (loading) {
+                return (
+                    <div className="flex items-center justify-center min-h-screen">
+                        <div className="text-xl font-semibold text-gray-700">Loading Net Worth Tracker...</div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return (
+                    <div className="flex items-center justify-center min-h-screen">
+                        <div className="text-xl font-semibold text-red-600 p-4 bg-red-100 rounded-lg">Error: {error}</div>
+                    </div>
+                );
+            }
+
+            const totalNetWorth = calculateTotalNetWorth();
+            const assetAllocationData = getAssetAllocationData();
+
+            return (
+                <div className="container mx-auto p-4 bg-white shadow-lg rounded-lg mt-8 mb-8">
+                    <h1 className="text-4xl font-bold text-center text-gray-800 mb-6">Net Worth Tracker</h1>
+                    <p className="text-center text-gray-600 mb-8">
+                        Welcome, {user ? `User ID: ${user.uid}` : 'Guest'}! Track your financial journey.
+                    </p>
+
+                    {/* Net Worth Summary */}
+                    <div className="bg-blue-600 text-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row items-center justify-between">
+                        <div className="flex items-center mb-4 md:mb-0">
+                            <Icon name="CircleDollarSign" className="w-10 h-10 mr-4" />
+                            <div>
+                                <h2 className="text-2xl font-semibold">Total Net Worth</h2>
+                                <p className="text-4xl font-bold mt-2">
+                                    {totalNetWorth.toLocaleString(undefined, {
+                                        style: 'currency',
+                                        currency: primaryDisplayCurrency,
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    })}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <label htmlFor="currency-select" className="text-lg">Display in:</label>
+                            <select
+                                id="currency-select"
+                                className="p-2 rounded-md bg-blue-700 text-white border border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                value={primaryDisplayCurrency}
+                                onChange={(e) => setPrimaryDisplayCurrency(e.target.value)}
+                            >
+                                <option value="INR">INR</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                            <button
+                                onClick={takeNetWorthSnapshot}
+                                className="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200 ease-in-out transform hover:scale-105"
+                            >
+                                Take Snapshot
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Add Asset Button */}
+                    <div className="flex justify-end mb-6">
+                        <button
+                            onClick={() => setShowAddAssetModal(true)}
+                            className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center"
+                        >
+                            <Icon name="Plus" className="w-5 h-5 mr-2" /> Add New Asset
+                        </button>
+                    </div>
+
+                    {/* Assets List */}
+                    <div className="mb-8">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <Icon name="LayoutGrid" className="w-6 h-6 mr-2" /> Your Assets
+                        </h2>
+                        {assets.length === 0 ? (
+                            <p className="text-gray-500 text-center py-8">No assets added yet. Click "Add New Asset" to get started!</p>
+                        ) : (
+                            <div className="overflow-x-auto rounded-lg shadow-md">
+                                <table className="min-w-full bg-white border-collapse">
+                                    <thead className="bg-gray-200">
+                                        <tr>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Asset Name</th>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Group</th>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value</th>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value ({primaryDisplayCurrency})</th>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {assets.map(asset => (
+                                            <tr key={asset.id} className="hover:bg-gray-50">
+                                                <td className="py-3 px-4 whitespace-nowrap text-gray-900">{asset.name}</td>
+                                                <td className="py-3 px-4 whitespace-nowrap text-gray-700">{asset.group}</td>
+                                                <td className="py-3 px-4 whitespace-nowrap text-gray-700">
+                                                    {asset.value.toLocaleString(undefined, {
+                                                        style: 'currency',
+                                                        currency: asset.currency,
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2
+                                                    })}
+                                                </td>
+                                                <td className="py-3 px-4 whitespace-nowrap text-gray-700">
+                                                    {convertCurrency(asset.value, asset.currency, primaryDisplayCurrency).toLocaleString(undefined, {
+                                                        style: 'currency',
+                                                        currency: primaryDisplayCurrency,
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2
+                                                    })}
+                                                </td>
+                                                <td className="py-3 px-4 whitespace-nowrap">
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedAsset(asset);
+                                                                setShowTransactionModal(true);
+                                                            }}
+                                                            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full shadow-sm transition duration-200 ease-in-out transform hover:scale-110"
+                                                            title="Adjust Value"
+                                                        >
+                                                            <Icon name="Plus" className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditAssetId(asset.id);
+                                                                setEditAssetName(asset.name);
+                                                                setEditAssetGroup(asset.group);
+                                                                setShowEditAssetModal(true);
+                                                            }}
+                                                            className="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full shadow-sm transition duration-200 ease-in-out transform hover:scale-110"
+                                                            title="Edit Asset"
+                                                        >
+                                                            <Icon name="Edit" className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteAsset(asset.id)}
+                                                            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-sm transition duration-200 ease-in-out transform hover:scale-110"
+                                                            title="Delete Asset"
+                                                        >
+                                                            <Icon name="Trash2" className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Net Worth Historical Graph */}
+                    <div className="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <Icon name="BarChart" className="w-6 h-6 mr-2" /> Net Worth History
+                        </h2>
+                        {netWorthSnapshots.length < 2 ? (
+                            <p className="text-gray-500 text-center py-8">Take a few snapshots to see your net worth history here.</p>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={300}>
+                                <LineChart
+                                    data={netWorthSnapshots.map(s => ({
+                                        ...s,
+                                        timestamp: new Date(s.timestamp).toLocaleDateString() // Format for display
+                                    }))}
+                                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                                    <XAxis dataKey="timestamp" tickFormatter={(tick) => tick} />
+                                    <YAxis
+                                        tickFormatter={(value) => value.toLocaleString(undefined, {
+                                            style: 'currency',
+                                            currency: primaryDisplayCurrency,
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0
+                                        })}
+                                    />
+                                    <Tooltip
+                                        formatter={(value) => value.toLocaleString(undefined, {
+                                            style: 'currency',
+                                            currency: primaryDisplayCurrency,
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        })}
+                                    />
+                                    <Legend />
+                                    <Line type="monotone" dataKey="totalNetWorth" stroke="#8884d8" activeDot={{ r: 8 }} name={`Net Worth (${primaryDisplayCurrency})`} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+
+                    {/* Asset Allocation Pie Chart */}
+                    <div className="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <Icon name="LayoutGrid" className="w-6 h-6 mr-2" /> Asset Allocation
+                        </h2>
+                        {assetAllocationData.length === 0 || assetAllocationData.every(d => d.value === 0) ? (
+                            <p className="text-gray-500 text-center py-8">Add assets to see your allocation breakdown.</p>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={300}>
+                                <PieChart>
+                                    <Pie
+                                        data={assetAllocationData}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        outerRadius={100}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                        nameKey="name"
+                                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                                    >
+                                        {assetAllocationData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        formatter={(value, name) => [
+                                            value.toLocaleString(undefined, {
+                                                style: 'currency',
+                                                currency: primaryDisplayCurrency,
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            }),
+                                            name
+                                        ]}
+                                    />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+
+                    {/* Transaction Log */}
+                    <div className="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <Icon name="BarChart" className="w-6 h-6 mr-2" /> Transaction History
+                        </h2>
+                        {transactions.length === 0 ? (
+                            <p className="text-gray-500 text-center py-8">No transactions recorded yet.</p>
+                        ) : (
+                            <div className="overflow-x-auto rounded-lg shadow-md">
+                                <table className="min-w-full bg-white border-collapse">
+                                    <thead className="bg-gray-200">
+                                        <tr>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Date</th>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Asset</th>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Amount Changed</th>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">New Value</th>
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {transactions.map(tx => (
+                                            <tr key={tx.id} className="hover:bg-gray-50">
+                                                <td className="py-3 px-4 whitespace-nowrap text-gray-900">
+                                                    {new Date(tx.timestamp).toLocaleString()}
+                                                </td>
+                                                <td className="py-3 px-4 whitespace-nowrap text-gray-700">{tx.assetName}</td>
+                                                <td className="py-3 px-4 whitespace-nowrap text-gray-700">
+                                                    <span className={`font-semibold ${tx.type === 'add' ? 'text-green-600' : tx.type === 'subtract' ? 'text-red-600' : 'text-blue-600'}`}>
+                                                        {tx.type === 'add' ? 'Add' : tx.type === 'subtract' ? 'Subtract' : 'Update'}
+                                                    </span>
+                                                </td>
+                                                <td className={`py-3 px-4 whitespace-nowrap ${tx.amountChanged >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {tx.amountChanged.toLocaleString(undefined, {
+                                                        style: 'currency',
+                                                        currency: assets.find(a => a.id === tx.assetId)?.currency || primaryDisplayCurrency, // Use asset's currency if available
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2
+                                                    })}
+                                                </td>
+                                                <td className="py-3 px-4 whitespace-nowrap text-gray-700">
+                                                    {tx.newValue.toLocaleString(undefined, {
+                                                        style: 'currency',
+                                                        currency: assets.find(a => a.id === tx.assetId)?.currency || primaryDisplayCurrency,
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2
+                                                    })}
+                                                </td>
+                                                <td className="py-3 px-4 text-gray-700">{tx.description}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Add Asset Modal */}
+                    {showAddAssetModal && (
+                        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+                                <h3 className="text-xl font-semibold mb-4">Add New Asset</h3>
+                                {error && <p className="text-red-500 mb-4">{error}</p>}
+                                <div className="mb-4">
+                                    <label htmlFor="assetName" className="block text-gray-700 text-sm font-bold mb-2">Asset Name:</label>
+                                    <input
+                                        type="text"
+                                        id="assetName"
+                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                        value={newAssetName}
+                                        onChange={(e) => setNewAssetName(e.target.value)}
+                                        placeholder="e.g., Savings Account, Google Stock"
+                                    />
+                                </div>
+                                <div className="mb-4">
+                                    <label htmlFor="assetValue" className="block text-gray-700 text-sm font-bold mb-2">Current Value:</label>
+                                    <input
+                                        type="number"
+                                        id="assetValue"
+                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                        value={newAssetValue}
+                                        onChange={(e) => setNewAssetValue(e.target.value)}
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="e.g., 10000.00"
+                                    />
+                                </div>
+                                <div className="mb-4">
+                                    <label htmlFor="assetCurrency" className="block text-gray-700 text-sm font-bold mb-2">Currency:</label>
+                                    <select
+                                        id="assetCurrency"
+                                        className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                        value={newAssetCurrency}
+                                        onChange={(e) => setNewAssetCurrency(e.target.value)}
+                                    >
+                                        <option value="INR">INR</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                </div>
+                                <div className="mb-6">
+                                    <label htmlFor="assetGroup" className="block text-gray-700 text-sm font-bold mb-2">Asset Group:</label>
+                                    <select
+                                        id="assetGroup"
+                                        className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                        value={newAssetGroup}
+                                        onChange={(e) => setNewAssetGroup(e.target.value)}
+                                    >
+                                        <option value="">Select a group (Optional)</option>
+                                        {assetGroups.map(group => (
+                                            <option key={group} value={group}>{group}</option>
+                                        ))}
+                                        {/* Allow custom input if needed, or add an "Other" option */}
+                                    </select>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <button
+                                        onClick={handleAddAsset}
+                                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                    >
+                                        Add Asset
+                                    </button>
+                                    <button
+                                        onClick={() => { setShowAddAssetModal(false); setError(null); }}
+                                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Adjust Value Modal */}
+                    {showTransactionModal && selectedAsset && (
+                        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+                                <h3 className="text-xl font-semibold mb-4">Adjust Value for {selectedAsset.name} ({selectedAsset.currency})</h3>
+                                <p className="text-gray-600 mb-4">Current Value: {selectedAsset.value.toLocaleString(undefined, { style: 'currency', currency: selectedAsset.currency })}</p>
+                                {error && <p className="text-red-500 mb-4">{error}</p>}
+
+                                <div className="mb-4">
+                                    <label className="block text-gray-700 text-sm font-bold mb-2">Update Type:</label>
+                                    <div className="flex space-x-4">
+                                        <label className="inline-flex items-center">
+                                            <input
+                                                type="radio"
+                                                className="form-radio text-blue-600"
+                                                name="transactionType"
+                                                value="add"
+                                                checked={transactionType === 'add'}
+                                                onChange={() => { setTransactionType('add'); setTransactionAbsoluteValue(''); }}
+                                            />
+                                            <span className="ml-2">Add</span>
+                                        </label>
+                                        <label className="inline-flex items-center">
+                                            <input
+                                                type="radio"
+                                                className="form-radio text-blue-600"
+                                                name="transactionType"
+                                                value="subtract"
+                                                checked={transactionType === 'subtract'}
+                                                onChange={() => { setTransactionType('subtract'); setTransactionAbsoluteValue(''); }}
+                                            />
+                                            <span className="ml-2">Subtract</span>
+                                        </label>
+                                        <label className="inline-flex items-center">
+                                            <input
+                                                type="radio"
+                                                className="form-radio text-blue-600"
+                                                name="transactionType"
+                                                value="absolute"
+                                                checked={transactionAbsoluteValue !== ''}
+                                                onChange={() => { setTransactionAmount(''); setTransactionDescription(''); setTransactionType('add'); }}
+                                            />
+                                            <span className="ml-2">Set Absolute Value</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {transactionAbsoluteValue === '' ? (
+                                    <div className="mb-4">
+                                        <label htmlFor="transactionAmount" className="block text-gray-700 text-sm font-bold mb-2">Amount to {transactionType}:</label>
+                                        <input
+                                            type="number"
+                                            id="transactionAmount"
+                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                            value={transactionAmount}
+                                            onChange={(e) => setTransactionAmount(e.target.value)}
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="e.g., 500.00"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="mb-4">
+                                        <label htmlFor="transactionAbsoluteValue" className="block text-gray-700 text-sm font-bold mb-2">New Absolute Value:</label>
+                                        <input
+                                            type="number"
+                                            id="transactionAbsoluteValue"
+                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                            value={transactionAbsoluteValue}
+                                            onChange={(e) => setTransactionAbsoluteValue(e.target.value)}
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="e.g., 10500.00"
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="mb-6">
+                                    <label htmlFor="transactionDescription" className="block text-gray-700 text-sm font-bold mb-2">Description (Optional):</label>
+                                    <input
+                                        type="text"
+                                        id="transactionDescription"
+                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                        value={transactionDescription}
+                                        onChange={(e) => setTransactionDescription(e.target.value)}
+                                        placeholder="e.g., Monthly deposit, Stock sale"
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <button
+                                        onClick={handleUpdateAssetValue}
+                                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                    >
+                                        Apply Change
+                                    </button>
+                                    <button
+                                        onClick={() => { setShowTransactionModal(false); setSelectedAsset(null); setError(null); setTransactionAmount(''); setTransactionDescription(''); setTransactionAbsoluteValue(''); }}
+                                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Edit Asset Modal */}
+                    {showEditAssetModal && editAssetId && (
+                        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+                                <h3 className="text-xl font-semibold mb-4">Edit Asset</h3>
+                                {error && <p className="text-red-500 mb-4">{error}</p>}
+                                <div className="mb-4">
+                                    <label htmlFor="editAssetName" className="block text-gray-700 text-sm font-bold mb-2">Asset Name:</label>
+                                    <input
+                                        type="text"
+                                        id="editAssetName"
+                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                        value={editAssetName}
+                                        onChange={(e) => setEditAssetName(e.target.value)}
+                                        placeholder="e.g., Savings Account"
+                                    />
+                                </div>
+                                <div className="mb-6">
+                                    <label htmlFor="editAssetGroup" className="block text-gray-700 text-sm font-bold mb-2">Asset Group:</label>
+                                    <select
+                                        id="editAssetGroup"
+                                        className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                        value={editAssetGroup}
+                                        onChange={(e) => setEditAssetGroup(e.target.value)}
+                                    >
+                                        <option value="">Select a group (Optional)</option>
+                                        {assetGroups.map(group => (
+                                            <option key={group} value={group}>{group}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <button
+                                        onClick={handleEditAsset}
+                                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                    >
+                                        Save Changes
+                                    </button>
+                                    <button
+                                        onClick={() => { setShowEditAssetModal(false); setEditAssetId(null); setError(null); }}
+                                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Render the App component
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
