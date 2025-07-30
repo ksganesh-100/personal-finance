@@ -320,11 +320,43 @@
                     </div>
                 </div>
 
-                <!-- Manage Currency Conversion Rates (Future Feature) -->
+                <!-- Manage Currency Conversion Rates -->
                 <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
                     <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Currency Conversion Rates</h2>
-                    <p class="text-gray-600">This feature will allow you to update currency exchange rates manually or fetch them from an API.</p>
-                    <p class="text-gray-500 mt-2">*(Coming Soon!)*</p>
+                    <p id="currency-rate-error" class="text-red-500 mb-4 hidden"></p>
+                    <div class="mb-4">
+                        <label for="usd-to-inr-rate" class="block text-gray-700 text-sm font-bold mb-2">USD to INR:</label>
+                        <input
+                            type="number"
+                            id="usd-to-inr-rate"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            min="0.01"
+                            step="0.01"
+                        />
+                    </div>
+                    <div class="mb-6">
+                        <label for="eur-to-inr-rate" class="block text-gray-700 text-sm font-bold mb-2">EUR to INR:</label>
+                        <input
+                            type="number"
+                            id="eur-to-inr-rate"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            min="0.01"
+                            step="0.01"
+                        />
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button
+                            id="save-currency-rates-btn"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            Save Rates
+                        </button>
+                    </div>
+                    <div class="mt-4 text-gray-700">
+                        <p>Current Rates:</p>
+                        <p>USD to INR: <span id="display-usd-inr">N/A</span></p>
+                        <p>EUR to INR: <span id="display-eur-inr">N/A</span></p>
+                    </div>
                 </div>
 
             </div>
@@ -587,11 +619,12 @@
         let assetsData = [];
         let transactionsData = [];
         let netWorthSnapshotsData = [];
-        let customAccountGroupsData = []; // New: Stores custom account groups
+        let customAccountGroupsData = []; // Stores custom account groups
+        let exchangeRatesData = {}; // New: Stores custom exchange rates
         let primaryDisplayCurrency = 'INR';
         let selectedAssetForAdjustment = null; // Stores the asset object for adjustment modal
         let currentEditAssetId = null; // Stores the ID of the asset being edited
-        let currentEditGroupId = null; // New: Stores the ID of the group being edited
+        let currentEditGroupId = null; // Stores the ID of the group being edited
 
         // Chart instances
         let netWorthChartInstance = null;
@@ -660,6 +693,15 @@
         const accountGroupsTable = document.getElementById('account-groups-table');
         const accountGroupsTableBody = document.getElementById('account-groups-table-body');
 
+        // New: Currency Rate Management Elements
+        const usdToInrRateInput = document.getElementById('usd-to-inr-rate');
+        const eurToInrRateInput = document.getElementById('eur-to-inr-rate');
+        const saveCurrencyRatesBtn = document.getElementById('save-currency-rates-btn');
+        const currencyRateError = document.getElementById('currency-rate-error');
+        const displayUsdInr = document.getElementById('display-usd-inr');
+        const displayEurInr = document.getElementById('display-eur-inr');
+
+
         // Modals
         const addAssetModal = document.getElementById('add-asset-modal');
         const addAssetError = document.getElementById('add-asset-error');
@@ -698,35 +740,32 @@
         const cancelEditGroupBtn = document.getElementById('cancel-edit-group-btn');
 
 
-        // Exchange rates (simplified, hardcoded)
-        const EXCHANGE_RATES = {
-            USD_TO_INR: 83.5,
-            EUR_TO_INR: 90.0,
-            INR_TO_USD: 1 / 83.5,
-            INR_TO_EUR: 1 / 90.0,
-            USD_TO_EUR: 0.92,
-            EUR_TO_USD: 1 / 0.92
-        };
-
         // Function to convert value to a target currency
         function convertCurrency(value, fromCurrency, toCurrency) {
             if (fromCurrency === toCurrency) {
                 return value;
             }
 
+            // Ensure exchange rates are loaded
+            if (Object.keys(exchangeRatesData).length === 0) {
+                console.warn("Exchange rates not loaded. Using default hardcoded rates.");
+                // Fallback to initial hardcoded rates if Firestore data isn't ready
+                return value; // Or implement a more robust fallback
+            }
+
             let valueInINR = value;
             if (fromCurrency === 'USD') {
-                valueInINR = value * EXCHANGE_RATES.USD_TO_INR;
+                valueInINR = value * (exchangeRatesData['USD_INR'] || 83.5); // Fallback to default if specific rate not found
             } else if (fromCurrency === 'EUR') {
-                valueInINR = value * EXCHANGE_RATES.EUR_TO_INR;
+                valueInINR = value * (exchangeRatesData['EUR_INR'] || 90.0); // Fallback to default
             }
 
             if (toCurrency === 'INR') {
                 return valueInINR;
             } else if (toCurrency === 'USD') {
-                return valueInINR * EXCHANGE_R.INR_TO_USD;
+                return valueInINR / (exchangeRatesData['USD_INR'] || 83.5); // Use division for inverse
             } else if (toCurrency === 'EUR') {
-                return valueInINR * EXCHANGE_RATES.INR_TO_EUR;
+                return valueInINR / (exchangeRatesData['EUR_INR'] || 90.0); // Use division for inverse
             }
             return value;
         }
@@ -798,6 +837,11 @@
             } else if (viewId === 'settings') {
                 settingsView.classList.remove('hidden');
                 navSettingsBtn.classList.add('active');
+                // When navigating to settings, populate current rates
+                usdToInrRateInput.value = exchangeRatesData['USD_INR'] || '';
+                eurToInrRateInput.value = exchangeRatesData['EUR_INR'] || '';
+                displayUsdInr.textContent = exchangeRatesData['USD_INR'] ? exchangeRatesData['USD_INR'].toFixed(2) : 'N/A';
+                displayEurInr.textContent = exchangeRatesData['EUR_INR'] ? exchangeRatesData['EUR_INR'].toFixed(2) : 'N/A';
             }
         }
 
@@ -878,7 +922,7 @@
                 showError("Failed to load net worth history.");
             });
 
-            // New: Custom Account Groups listener
+            // Custom Account Groups listener
             const customAccountGroupsCollectionRef = collection(db, `artifacts/${firebaseConfig.projectId}/users/${uid}/customAccountGroups`);
             onSnapshot(customAccountGroupsCollectionRef, (snapshot) => {
                 customAccountGroupsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -887,6 +931,33 @@
             }, (err) => {
                 console.error("Error fetching custom account groups:", err);
                 showError("Failed to load custom account groups.");
+            });
+
+            // New: Exchange Rates listener
+            const exchangeRatesDocRef = doc(db, `artifacts/${firebaseConfig.projectId}/users/${uid}/exchangeRates`, 'user_rates');
+            onSnapshot(exchangeRatesDocRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    exchangeRatesData = docSnapshot.data();
+                } else {
+                    // Set default rates if no custom rates exist
+                    exchangeRatesData = {
+                        USD_INR: 83.5,
+                        EUR_INR: 90.0
+                    };
+                    // Optionally, save these defaults to Firestore for the user
+                    // setDoc(exchangeRatesDocRef, exchangeRatesData, { merge: true });
+                }
+                // Update UI elements that display rates
+                displayUsdInr.textContent = exchangeRatesData['USD_INR'] ? exchangeRatesData['USD_INR'].toFixed(2) : 'N/A';
+                displayEurInr.textContent = exchangeRatesData['EUR_INR'] ? exchangeRatesData['EUR_INR'].toFixed(2) : 'N/A';
+                // Re-render components that depend on rates
+                updateNetWorthSummary();
+                renderAssetsTable();
+                renderNetWorthChart();
+                renderAllocationChart();
+            }, (err) => {
+                console.error("Error fetching exchange rates:", err);
+                showError("Failed to load exchange rates.");
             });
         }
 
@@ -905,7 +976,6 @@
             assetsData.forEach(asset => {
                 total += convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
             });
-            // Point 5: Remove decimal points from total net worth
             totalNetWorthDisplay.textContent = formatCurrency(total, primaryDisplayCurrency, false);
             displayCurrencyAssets.textContent = primaryDisplayCurrency; // Update header
         }
@@ -913,7 +983,6 @@
         function renderAssetsTable() {
             assetsTableBody.innerHTML = ''; // Clear existing rows
 
-            // Point 1: Sort assets by group and then alphabetically within groups
             const sortedAssets = [...assetsData].sort((a, b) => {
                 const groupA = a.group || 'Other';
                 const groupB = b.group || 'Other';
@@ -935,7 +1004,6 @@
                 sortedAssets.forEach((asset, index) => {
                     const assetGroup = asset.group || 'Other';
 
-                    // Point 2: Add sub-totals for each asset group
                     if (assetGroup !== currentGroup && currentGroup !== null) {
                         const subtotalRow = assetsTableBody.insertRow();
                         subtotalRow.className = 'bg-gray-100 font-semibold border-t-2 border-gray-300';
@@ -1171,7 +1239,7 @@
             }
         }
 
-        // New: Render custom account groups list in settings
+        // Render custom account groups list in settings
         function renderAccountGroupsList() {
             accountGroupsTableBody.innerHTML = ''; // Clear existing rows
             if (customAccountGroupsData.length === 0) {
@@ -1200,7 +1268,7 @@
             }
         }
 
-        // New: Populate account group dropdowns in Add/Edit Asset modals
+        // Populate account group dropdowns in Add/Edit Asset modals
         function populateAccountGroupDropdowns() {
             // Clear existing options, except the "Select a group" one
             newAssetGroupSelect.innerHTML = '<option value="">Select a group (Optional)</option>';
@@ -1558,7 +1626,7 @@
             }
         }
 
-        // Point 6: CSV Export Function
+        // CSV Export Function
         function exportAssetsToCSV() {
             if (assetsData.length === 0) {
                 alert("No assets to export."); // Using alert for simplicity, replace with custom modal if needed.
@@ -1599,7 +1667,7 @@
             }
         }
 
-        // New: Account Group Management Handlers
+        // Account Group Management Handlers
         async function handleAddGroup() {
             if (!currentUser || !db) {
                 accountGroupError.textContent = "User not authenticated or database not ready.";
@@ -1698,6 +1766,38 @@
             }
         }
 
+        // New: Handle saving currency rates
+        async function handleSaveCurrencyRates() {
+            if (!currentUser || !db) {
+                currencyRateError.textContent = "User not authenticated or database not ready.";
+                currencyRateError.classList.remove('hidden');
+                return;
+            }
+
+            const usdRate = parseFloat(usdToInrRateInput.value);
+            const eurRate = parseFloat(eurToInrRateInput.value);
+
+            if (isNaN(usdRate) || usdRate <= 0 || isNaN(eurRate) || eurRate <= 0) {
+                currencyRateError.textContent = "Please enter valid positive numbers for both rates.";
+                currencyRateError.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const ratesDocRef = doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/exchangeRates`, 'user_rates');
+                await setDoc(ratesDocRef, {
+                    USD_INR: usdRate,
+                    EUR_INR: eurRate,
+                    updatedAt: Date.now()
+                });
+                currencyRateError.classList.add('hidden');
+                // Rates will be updated via onSnapshot, which will trigger re-renders
+            } catch (err) {
+                console.error("Error saving currency rates:", err);
+                currencyRateError.textContent = "Failed to save rates: " + err.message;
+                currencyRateError.classList.remove('hidden');
+            }
+        }
 
         // --- Event Listeners Setup ---
         document.addEventListener('DOMContentLoaded', initializeFirebase);
@@ -1749,10 +1849,13 @@
         saveEditedAssetBtn.addEventListener('click', handleEditAssetSubmit);
         cancelEditAssetBtn.addEventListener('click', closeEditAssetModal);
 
-        // New: Account Group Management Listeners
+        // Account Group Management Listeners
         addGroupBtn.addEventListener('click', handleAddGroup);
         saveEditedGroupBtn.addEventListener('click', handleEditGroupSubmit);
         cancelEditGroupBtn.addEventListener('click', closeEditGroupModal);
+
+        // New: Currency Rate Management Listeners
+        saveCurrencyRatesBtn.addEventListener('click', handleSaveCurrencyRates);
 
     </script>
 </body>
