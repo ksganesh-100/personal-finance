@@ -55,11 +55,6 @@
           measurementId: "G-DXTCNEJ57E"
         };
 
-        // Global variables provided by the Canvas environment (override with actual config for local testing)
-        // const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Use projectId from firebaseConfig
-        // const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {}; // Already defined above
-        // const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
         // Initialize Firebase
         let app;
         let db;
@@ -131,14 +126,8 @@
 
     <!-- Recharts CDN (UMD build) - must be loaded after React/ReactDOM and before your App script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/recharts.min.js"></script>
-    <!-- Lucide React CDN (UMD build) - must be loaded after React/ReactDOM and before your App script -->
-    <!-- Note: A direct UMD build for lucide-react might not be readily available or might require specific imports.
-         The inline SVG fallback is used below for simplicity if a direct CDN import is not straightforward.
-         For full Lucide React, typically you'd npm install and import.
-         For this vibe coding, the inline SVG fallback for icons is practical.
-    -->
-    <script src="https://cdn.jsdelivr.net/npm/lucide-react@0.364.0/dist/umd/lucide-react.min.js"></script>
-
+    <!-- REMOVED Lucide React CDN as it was causing conflicts and is not needed with inline SVGs -->
+    
     <!-- React App Component (JSX will be transformed by Babel) -->
     <!-- This script type="text/babel" tells the browser to process JSX -->
     <script type="text/babel">
@@ -223,7 +212,7 @@
             const [showEditAssetModal, setShowEditAssetModal] = useState(false);
             const [editAssetId, setEditAssetId] = useState(null);
             const [editAssetName, setEditAssetName] = useState('');
-            const [editAssetGroup, setEditAssetGroup] = useState('');
+            const [editAssetGroup, setEditAssetGroup] = '';
 
             // Available asset groups (can be dynamically populated from existing assets later)
             const assetGroups = ['Banks', 'Equities', 'Real Estate', 'Crypto', 'Other'];
