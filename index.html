@@ -128,6 +128,7 @@
                                 <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Group</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value (<span id="display-currency-assets">INR</span>)</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Last Updated</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Actions</th>
                             </tr>
                         </thead>
@@ -135,6 +136,14 @@
                             <!-- Asset rows will be injected here by JavaScript -->
                         </tbody>
                     </table>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button
+                        id="export-csv-btn"
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center"
+                    >
+                        Export to CSV
+                    </button>
                 </div>
             </div>
 
@@ -238,9 +247,9 @@
                 >
                     <option value="">Select a group (Optional)</option>
                     <option value="Banks">Banks</option>
-                    <option value="Equities">Equities</option>
-                    <option value="Real Estate">Real Estate</option>
-                    <option value="Crypto">Crypto</option>
+                    <option value="Brokerage Accounts">Brokerage Accounts</option>
+                    <option value="Mutual Funds">Mutual Funds</option>
+                    <option value="Immovable assets">Immovable assets</option>
                     <option value="Other">Other</option>
                 </select>
             </div>
@@ -373,9 +382,9 @@
                 >
                     <option value="">Select a group (Optional)</option>
                     <option value="Banks">Banks</option>
-                    <option value="Equities">Equities</option>
-                    <option value="Real Estate">Real Estate</option>
-                    <option value="Crypto">Crypto</option>
+                    <option value="Brokerage Accounts">Brokerage Accounts</option>
+                    <option value="Mutual Funds">Mutual Funds</option>
+                    <option value="Immovable assets">Immovable assets</option>
                     <option value="Other">Other</option>
                 </select>
             </div>
@@ -447,6 +456,7 @@
         const noAssetsMessage = document.getElementById('no-assets-message');
         const assetsTableContainer = document.getElementById('assets-table-container');
         const displayCurrencyAssets = document.getElementById('display-currency-assets');
+        const exportCsvBtn = document.getElementById('export-csv-btn'); // New: CSV export button
 
         const netWorthChartCanvas = document.getElementById('netWorthChart');
         const noHistoryMessage = document.getElementById('no-history-message');
@@ -637,12 +647,12 @@
         }
 
         // --- UI Rendering Functions ---
-        function formatCurrency(value, currencyCode) {
+        function formatCurrency(value, currencyCode, includeDecimals = true) {
             return value.toLocaleString(undefined, {
                 style: 'currency',
                 currency: currencyCode,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: includeDecimals ? 2 : 0,
+                maximumFractionDigits: includeDecimals ? 2 : 0
             });
         }
 
@@ -651,19 +661,53 @@
             assetsData.forEach(asset => {
                 total += convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
             });
-            totalNetWorthDisplay.textContent = formatCurrency(total, primaryDisplayCurrency);
+            // Point 5: Remove decimal points from total net worth
+            totalNetWorthDisplay.textContent = formatCurrency(total, primaryDisplayCurrency, false);
             displayCurrencyAssets.textContent = primaryDisplayCurrency; // Update header
         }
 
         function renderAssetsTable() {
             assetsTableBody.innerHTML = ''; // Clear existing rows
-            if (assetsData.length === 0) {
+
+            // Point 1: Sort assets by group and then alphabetically within groups
+            const sortedAssets = [...assetsData].sort((a, b) => {
+                const groupA = a.group || 'Other';
+                const groupB = b.group || 'Other';
+                if (groupA < groupB) return -1;
+                if (groupA > groupB) return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            if (sortedAssets.length === 0) {
                 noAssetsMessage.classList.remove('hidden');
                 assetsTableContainer.classList.add('hidden');
             } else {
                 noAssetsMessage.classList.add('hidden');
                 assetsTableContainer.classList.remove('hidden');
-                assetsData.forEach(asset => {
+
+                let currentGroup = null;
+                let groupSubtotal = 0;
+
+                sortedAssets.forEach((asset, index) => {
+                    const assetGroup = asset.group || 'Other';
+
+                    // Point 2: Add sub-totals for each asset group
+                    if (assetGroup !== currentGroup && currentGroup !== null) {
+                        const subtotalRow = assetsTableBody.insertRow();
+                        subtotalRow.className = 'bg-gray-100 font-semibold border-t-2 border-gray-300';
+                        subtotalRow.innerHTML = `
+                            <td class="py-2 px-4 whitespace-nowrap text-right" colspan="2">Total ${currentGroup}:</td>
+                            <td class="py-2 px-4 whitespace-nowrap text-gray-800" colspan="3">
+                                ${formatCurrency(groupSubtotal, primaryDisplayCurrency)}
+                            </td>
+                            <td class="py-2 px-4"></td>
+                        `;
+                        groupSubtotal = 0; // Reset subtotal for the new group
+                    }
+                    currentGroup = assetGroup;
+                    groupSubtotal += convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
+
+
                     const row = assetsTableBody.insertRow();
                     row.className = 'hover:bg-gray-50';
                     row.innerHTML = `
@@ -674,6 +718,9 @@
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap text-gray-700">
                             ${formatCurrency(convertCurrency(asset.value, asset.currency, primaryDisplayCurrency), primaryDisplayCurrency)}
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap text-gray-700">
+                            ${new Date(asset.updatedAt).toLocaleString()}
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap">
                             <div class="flex space-x-2">
@@ -694,6 +741,19 @@
                     row.querySelector('.edit-asset-btn').addEventListener('click', (e) => openEditAssetModal(e.currentTarget.dataset.id));
                     row.querySelector('.delete-asset-btn').addEventListener('click', (e) => handleDeleteAsset(e.currentTarget.dataset.id));
                 });
+
+                // Add the last group's subtotal after the loop
+                if (currentGroup !== null) {
+                    const subtotalRow = assetsTableBody.insertRow();
+                    subtotalRow.className = 'bg-gray-100 font-semibold border-t-2 border-gray-300';
+                    subtotalRow.innerHTML = `
+                        <td class="py-2 px-4 whitespace-nowrap text-right" colspan="2">Total ${currentGroup}:</td>
+                        <td class="py-2 px-4 whitespace-nowrap text-gray-800" colspan="3">
+                            ${formatCurrency(groupSubtotal, primaryDisplayCurrency)}
+                        </td>
+                        <td class="py-2 px-4"></td>
+                    `;
+                }
             }
         }
 
@@ -747,7 +807,8 @@
                 netWorthChartContainer.classList.remove('hidden');
             }
 
-            const labels = netWorthSnapshotsData.map(s => new Date(s.timestamp).toLocaleDateString());
+            // Point 8: Use toLocaleString() to include time for unique X-axis labels
+            const labels = netWorthSnapshotsData.map(s => new Date(s.timestamp).toLocaleString());
             const data = netWorthSnapshotsData.map(s => s.totalNetWorth);
 
             if (netWorthChartInstance) {
@@ -1112,6 +1173,48 @@
             }
         }
 
+        // Point 6: CSV Export Function
+        function exportAssetsToCSV() {
+            if (assetsData.length === 0) {
+                alert("No assets to export."); // Using alert for simplicity, replace with custom modal if needed.
+                return;
+            }
+
+            const headers = ["Asset Name", "Group", "Value", "Currency", "Value (Primary Currency)", "Last Updated"];
+            const rows = assetsData.map(asset => {
+                const valueInPrimary = convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
+                return [
+                    `"${asset.name.replace(/"/g, '""')}"`, // Handle commas and quotes in name
+                    `"${(asset.group || 'Other').replace(/"/g, '""')}"`,
+                    asset.value.toFixed(2),
+                    asset.currency,
+                    valueInPrimary.toFixed(2),
+                    new Date(asset.updatedAt).toLocaleString()
+                ];
+            });
+
+            const csvContent = [
+                headers.join(","),
+                ...rows.map(row => row.join(","))
+            ].join("\n");
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) { // Feature detection for download attribute
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `net_worth_assets_${new Date().toISOString().slice(0,10)}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                // Fallback for browsers that don't support download attribute
+                alert("Your browser does not support downloading files directly. Please copy the content below:\n\n" + csvContent);
+            }
+        }
+
+
         // --- Event Listeners Setup ---
         document.addEventListener('DOMContentLoaded', initializeFirebase);
 
@@ -1127,6 +1230,7 @@
         addAssetBtn.addEventListener('click', openAddAssetModal);
         saveNewAssetBtn.addEventListener('click', handleAddAssetSubmit);
         cancelAddAssetBtn.addEventListener('click', closeAddAssetModal);
+        exportCsvBtn.addEventListener('click', exportAssetsToCSV); // New: CSV export button listener
 
         // Adjust Value Modal radio button logic
         transactionTypeRadios.forEach(radio => {
