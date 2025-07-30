@@ -396,21 +396,15 @@
         </div>
     </div>
 
+    <!-- Chart.js CDN (for graphs) - Loaded as a regular script -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- Firebase CDN -->
     <script type="module">
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // Chart.js CDN (for graphs)
-        // Note: Chart.js is a pure JS library, compatible with vanilla JS.
-        // It should be loaded before the main script that uses it.
-        // It's loaded here in the <script type="module"> block for simplicity,
-        // but could also be a separate <script src="..."> in the head.
-        // For this setup, it's fine as long as it's available when the main script runs.
-        import Chart from "https://cdn.jsdelivr.net/npm/chart.js";
-
 
         // Your Firebase project configuration
         const firebaseConfig = {
