@@ -50,6 +50,20 @@
         .hidden {
             display: none !important;
         }
+        /* Navigation specific styles */
+        .nav-link {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+        .nav-link.active {
+            background-color: #00C49F; /* Highlight color for active link */
+            color: white;
+            font-weight: 600;
+        }
+        .nav-link:hover:not(.active) {
+            background-color: #374151; /* Darker hover for non-active */
+        }
     </style>
 </head>
 <body>
@@ -64,140 +78,255 @@
             <div class="text-xl font-semibold text-red-600 p-4 bg-red-100 rounded-lg">Error: <span id="error-message"></span></div>
         </div>
 
+        <!-- Authentication View -->
+        <div id="auth-view" class="view-section hidden flex flex-col items-center justify-center min-h-[60vh]">
+            <h1 class="text-4xl font-bold text-gray-800 mb-8">Welcome to Net Worth Tracker</h1>
+            <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h2 id="auth-form-title" class="text-2xl font-semibold text-center text-gray-800 mb-6">Sign In</h2>
+                <p id="auth-error-message" class="text-red-500 text-center mb-4 hidden"></p>
+
+                <div class="mb-4">
+                    <label for="auth-email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                    <input
+                        type="email"
+                        id="auth-email"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        placeholder="your@example.com"
+                    />
+                </div>
+                <div class="mb-6">
+                    <label for="auth-password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
+                    <input
+                        type="password"
+                        id="auth-password"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        placeholder="********"
+                    />
+                </div>
+                <div class="flex flex-col space-y-4">
+                    <button
+                        id="sign-in-btn"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out"
+                    >
+                        Sign In
+                    </button>
+                    <button
+                        id="sign-up-btn"
+                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out"
+                    >
+                        Sign Up
+                    </button>
+                    <button
+                        id="toggle-auth-mode-btn"
+                        class="text-blue-500 hover:text-blue-700 text-sm mt-4"
+                    >
+                        Switch to Sign Up
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Application Content (initially hidden) -->
         <div id="main-content" class="hidden">
-            <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">Net Worth Tracker</h1>
-            <p class="text-center text-gray-600 mb-8">
-                Welcome, User ID: <span id="user-id-display"></span>! Track your financial journey.
-            </p>
+            <!-- Header and Navigation -->
+            <header class="bg-gray-900 text-white p-4 rounded-t-lg flex flex-col md:flex-row items-center justify-between mb-6">
+                <div class="text-2xl font-bold text-teal-400 mb-4 md:mb-0">networth</div>
+                <nav class="flex space-x-4 items-center">
+                    <button id="nav-dashboard" class="nav-link active">Dashboard</button>
+                    <button id="nav-accounts" class="nav-link">Accounts</button>
+                    <button id="nav-settings" class="nav-link">Settings</button>
+                    <button id="sign-out-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200 ease-in-out transform hover:scale-105 ml-4">Sign Out</button>
+                </nav>
+            </header>
 
-            <!-- Net Worth Summary -->
-            <div class="bg-blue-600 text-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row items-center justify-between">
-                <div class="flex items-center mb-4 md:mb-0">
-                    <!-- DollarSign Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mr-4"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 2v20"></path></svg>
-                    <div>
-                        <h2 class="text-2xl font-semibold">Total Net Worth</h2>
-                        <p id="total-net-worth" class="text-4xl font-bold mt-2"></p>
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view-section">
+                <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">Your Dashboard</h1>
+                <p class="text-center text-gray-600 mb-8">
+                    Welcome, User ID: <span id="user-id-display"></span>! Track your financial journey.
+                </p>
+
+                <!-- Net Worth Summary -->
+                <div class="bg-blue-600 text-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row items-center justify-between">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <!-- DollarSign Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mr-4"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 2v20"></path></svg>
+                        <div>
+                            <h2 class="text-2xl font-semibold">Total Net Worth</h2>
+                            <p id="total-net-worth" class="text-4xl font-bold mt-2"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label for="currency-select" class="text-lg">Display in:</label>
+                        <select
+                            id="currency-select"
+                            class="p-2 rounded-md bg-blue-700 text-white border border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        >
+                            <option value="INR">INR</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                        </select>
+                        <button
+                            id="take-snapshot-btn"
+                            class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200 ease-in-out transform hover:scale-105"
+                        >
+                            Take Snapshot
+                        </button>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <label for="currency-select" class="text-lg">Display in:</label>
-                    <select
-                        id="currency-select"
-                        class="p-2 rounded-md bg-blue-700 text-white border border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    >
-                        <option value="INR">INR</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                    </select>
+
+                <!-- Net Worth Historical Graph -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <!-- BarChart Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                        Net Worth History
+                    </h2>
+                    <p id="no-history-message" class="text-gray-500 text-center py-8 hidden">Take a few snapshots to see your net worth history here.</p>
+                    <div id="net-worth-chart-container" class="relative w-full h-80 hidden">
+                        <canvas id="netWorthChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Asset Allocation Pie Chart -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <!-- LayoutGrid Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        Asset Allocation
+                    </h2>
+                    <p id="no-allocation-message" class="text-gray-500 text-center py-8 hidden">Add assets to see your allocation breakdown.</p>
+                    <div id="allocation-chart-container" class="relative w-full h-80 hidden">
+                        <canvas id="assetAllocationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Transaction Log -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <!-- BarChart Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                        Transaction History
+                    </h2>
+                    <p id="no-transactions-message" class="text-gray-500 text-center py-8 hidden">No transactions recorded yet.</p>
+                    <div id="transactions-table-container" class="overflow-x-auto rounded-lg shadow-md hidden">
+                        <table class="min-w-full bg-white border-collapse">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Date</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Asset</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Amount Changed</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">New Value</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-table-body" class="divide-y divide-gray-200">
+                                <!-- Transaction rows will be injected here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accounts View -->
+            <div id="accounts-view" class="view-section hidden">
+                <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">Your Accounts</h1>
+
+                <!-- Add Asset Button -->
+                <div class="flex justify-end mb-6">
                     <button
-                        id="take-snapshot-btn"
-                        class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200 ease-in-out transform hover:scale-105"
+                        id="add-asset-btn"
+                        class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center"
                     >
-                        Take Snapshot
+                        <!-- Plus Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                        Add New Asset
                     </button>
                 </div>
-            </div>
 
-            <!-- Add Asset Button -->
-            <div class="flex justify-end mb-6">
-                <button
-                    id="add-asset-btn"
-                    class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center"
-                >
-                    <!-- Plus Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
-                    Add New Asset
-                </button>
-            </div>
-
-            <!-- Assets List -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <!-- LayoutGrid Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    Your Assets
-                </h2>
-                <p id="no-assets-message" class="text-gray-500 text-center py-8 hidden">No assets added yet. Click "Add New Asset" to get started!</p>
-                <div id="assets-table-container" class="overflow-x-auto rounded-lg shadow-md hidden">
-                    <table class="min-w-full bg-white border-collapse">
-                        <thead class="bg-gray-200">
-                            <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Asset Name</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Group</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value (<span id="display-currency-assets">INR</span>)</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Last Updated</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="assets-table-body" class="divide-y divide-gray-200">
-                            <!-- Asset rows will be injected here by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <button
-                        id="export-csv-btn"
-                        class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center"
-                    >
-                        Export to CSV
-                    </button>
+                <!-- Assets List -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <!-- LayoutGrid Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        All Assets
+                    </h2>
+                    <p id="no-assets-message" class="text-gray-500 text-center py-8 hidden">No assets added yet. Click "Add New Asset" to get started!</p>
+                    <div id="assets-table-container" class="overflow-x-auto rounded-lg shadow-md hidden">
+                        <table class="min-w-full bg-white border-collapse">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Asset Name</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Group</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value (<span id="display-currency-assets">INR</span>)</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Last Updated</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assets-table-body" class="divide-y divide-gray-200">
+                                <!-- Asset rows will be injected here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-end mt-4">
+                        <button
+                            id="export-csv-btn"
+                            class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center"
+                        >
+                            Export to CSV
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Net Worth Historical Graph -->
-            <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <!-- BarChart Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
-                    Net Worth History
-                </h2>
-                <p id="no-history-message" class="text-gray-500 text-center py-8 hidden">Take a few snapshots to see your net worth history here.</p>
-                <div id="net-worth-chart-container" class="relative w-full h-80 hidden">
-                    <canvas id="netWorthChart"></canvas>
-                </div>
-            </div>
+            <!-- Settings View -->
+            <div id="settings-view" class="view-section hidden">
+                <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">Settings</h1>
 
-            <!-- Asset Allocation Pie Chart -->
-            <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <!-- LayoutGrid Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    Asset Allocation
-                </h2>
-                <p id="no-allocation-message" class="text-gray-500 text-center py-8 hidden">Add assets to see your allocation breakdown.</p>
-                <div id="allocation-chart-container" class="relative w-full h-80 hidden">
-                    <canvas id="assetAllocationChart"></canvas>
+                <!-- Manage Account Groups -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Account Groups</h2>
+                    <p id="account-group-error" class="text-red-500 mb-4 hidden"></p>
+                    <div class="flex mb-4">
+                        <input
+                            type="text"
+                            id="new-group-name"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mr-2"
+                            placeholder="New Group Name"
+                        />
+                        <button
+                            id="add-group-btn"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            Add Group
+                        </button>
+                    </div>
+                    <div id="account-groups-list">
+                        <!-- Account groups will be rendered here -->
+                        <p id="no-groups-message" class="text-gray-500 text-center py-4 hidden">No custom groups added yet.</p>
+                        <table id="account-groups-table" class="min-w-full bg-white border-collapse hidden">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-700 uppercase">Group Name</th>
+                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-700 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="account-groups-table-body" class="divide-y divide-gray-200">
+                                <!-- Group rows will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Transaction Log -->
-            <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <!-- BarChart Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
-                    Transaction History
-                </h2>
-                <p id="no-transactions-message" class="text-gray-500 text-center py-8 hidden">No transactions recorded yet.</p>
-                <div id="transactions-table-container" class="overflow-x-auto rounded-lg shadow-md hidden">
-                    <table class="min-w-full bg-white border-collapse">
-                        <thead class="bg-gray-200">
-                            <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Date</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Asset</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Type</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Amount Changed</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">New Value</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Description</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactions-table-body" class="divide-y divide-gray-200">
-                            <!-- Transaction rows will be injected here by JavaScript -->
-                        </tbody>
-                    </table>
+                <!-- Manage Currency Conversion Rates (Future Feature) -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Currency Conversion Rates</h2>
+                    <p class="text-gray-600">This feature will allow you to update currency exchange rates manually or fetch them from an API.</p>
+                    <p class="text-gray-500 mt-2">*(Coming Soon!)*</p>
                 </div>
+
             </div>
         </div>
     </div>
@@ -246,11 +375,7 @@
                     class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
                     <option value="">Select a group (Optional)</option>
-                    <option value="Banks">Banks</option>
-                    <option value="Brokerage Accounts">Brokerage Accounts</option>
-                    <option value="Mutual Funds">Mutual Funds</option>
-                    <option value="Immovable assets">Immovable assets</option>
-                    <option value="Other">Other</option>
+                    <!-- Options will be dynamically populated by JS -->
                 </select>
             </div>
             <div class="flex items-center justify-between">
@@ -381,11 +506,7 @@
                     class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
                     <option value="">Select a group (Optional)</option>
-                    <option value="Banks">Banks</option>
-                    <option value="Brokerage Accounts">Brokerage Accounts</option>
-                    <option value="Mutual Funds">Mutual Funds</option>
-                    <option value="Immovable assets">Immovable assets</option>
-                    <option value="Other">Other</option>
+                    <!-- Options will be dynamically populated by JS -->
                 </select>
             </div>
             <div class="flex items-center justify-between">
@@ -405,6 +526,38 @@
         </div>
     </div>
 
+    <!-- Edit Account Group Modal -->
+    <div id="edit-group-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold mb-4">Edit Account Group</h3>
+            <p id="edit-group-error" class="text-red-500 mb-4 hidden"></p>
+            <div class="mb-4">
+                <label for="edit-group-name" class="block text-gray-700 text-sm font-bold mb-2">Group Name:</label>
+                <input
+                    type="text"
+                    id="edit-group-name"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    placeholder="e.g., New Group Name"
+                />
+            </div>
+            <div class="flex items-center justify-between">
+                <button
+                    id="save-edited-group-btn"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                    Save Changes
+                </button>
+                <button
+                    id="cancel-edit-group-btn"
+                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Chart.js CDN (for graphs) - Loaded as a regular script -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -412,7 +565,7 @@
     <script type="module">
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Your Firebase project configuration
@@ -434,9 +587,11 @@
         let assetsData = [];
         let transactionsData = [];
         let netWorthSnapshotsData = [];
+        let customAccountGroupsData = []; // New: Stores custom account groups
         let primaryDisplayCurrency = 'INR';
         let selectedAssetForAdjustment = null; // Stores the asset object for adjustment modal
         let currentEditAssetId = null; // Stores the ID of the asset being edited
+        let currentEditGroupId = null; // New: Stores the ID of the group being edited
 
         // Chart instances
         let netWorthChartInstance = null;
@@ -446,29 +601,64 @@
         const loadingState = document.getElementById('loading-state');
         const errorState = document.getElementById('error-state');
         const errorMessageSpan = document.getElementById('error-message');
+        
+        // Auth View Elements
+        const authView = document.getElementById('auth-view');
+        const authFormTitle = document.getElementById('auth-form-title');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const signInBtn = document.getElementById('sign-in-btn');
+        const signUpBtn = document.getElementById('sign-up-btn');
+        const toggleAuthModeBtn = document.getElementById('toggle-auth-mode-btn');
+        const authErrorMessage = document.getElementById('auth-error-message');
+        let isSignInMode = true; // State for auth form
+
+        // Main Content Elements
         const mainContent = document.getElementById('main-content');
         const userIdDisplay = document.getElementById('user-id-display');
         const totalNetWorthDisplay = document.getElementById('total-net-worth');
         const currencySelect = document.getElementById('currency-select');
         const takeSnapshotBtn = document.getElementById('take-snapshot-btn');
+        const signOutBtn = document.getElementById('sign-out-btn'); // New: Sign Out button
+
+        // Navigation buttons
+        const navDashboardBtn = document.getElementById('nav-dashboard');
+        const navAccountsBtn = document.getElementById('nav-accounts');
+        const navSettingsBtn = document.getElementById('nav-settings');
+
+        // View sections
+        const dashboardView = document.getElementById('dashboard-view');
+        const accountsView = document.getElementById('accounts-view');
+        const settingsView = document.getElementById('settings-view');
+
+        // Dashboard specific elements (moved from main content)
+        const netWorthChartCanvas = document.getElementById('netWorthChart');
+        const noHistoryMessage = document.getElementById('no-history-message');
+        const netWorthChartContainer = document.getElementById('net-worth-chart-container');
+        const assetAllocationChartCanvas = document.getElementById('assetAllocationChart');
+        const noAllocationMessage = document.getElementById('no-allocation-message');
+        const allocationChartContainer = document.getElementById('allocation-chart-container');
+        const transactionsTableBody = document.getElementById('transactions-table-body');
+        const noTransactionsMessage = document.getElementById('no-transactions-message');
+        const transactionsTableContainer = document.getElementById('transactions-table-container');
+
+
+        // Accounts View specific elements
         const addAssetBtn = document.getElementById('add-asset-btn');
         const assetsTableBody = document.getElementById('assets-table-body');
         const noAssetsMessage = document.getElementById('no-assets-message');
         const assetsTableContainer = document.getElementById('assets-table-container');
         const displayCurrencyAssets = document.getElementById('display-currency-assets');
-        const exportCsvBtn = document.getElementById('export-csv-btn'); // New: CSV export button
+        const exportCsvBtn = document.getElementById('export-csv-btn');
 
-        const netWorthChartCanvas = document.getElementById('netWorthChart');
-        const noHistoryMessage = document.getElementById('no-history-message');
-        const netWorthChartContainer = document.getElementById('net-worth-chart-container');
-
-        const assetAllocationChartCanvas = document.getElementById('assetAllocationChart');
-        const noAllocationMessage = document.getElementById('no-allocation-message');
-        const allocationChartContainer = document.getElementById('allocation-chart-container');
-
-        const transactionsTableBody = document.getElementById('transactions-table-body');
-        const noTransactionsMessage = document.getElementById('no-transactions-message');
-        const transactionsTableContainer = document.getElementById('transactions-table-container');
+        // Settings View specific elements
+        const newGroupNameInput = document.getElementById('new-group-name');
+        const addGroupBtn = document.getElementById('add-group-btn');
+        const accountGroupError = document.getElementById('account-group-error');
+        const accountGroupsList = document.getElementById('account-groups-list');
+        const noGroupsMessage = document.getElementById('no-groups-message');
+        const accountGroupsTable = document.getElementById('account-groups-table');
+        const accountGroupsTableBody = document.getElementById('account-groups-table-body');
 
         // Modals
         const addAssetModal = document.getElementById('add-asset-modal');
@@ -501,6 +691,12 @@
         const saveEditedAssetBtn = document.getElementById('save-edited-asset-btn');
         const cancelEditAssetBtn = document.getElementById('cancel-edit-asset-btn');
 
+        const editGroupModal = document.getElementById('edit-group-modal'); // New: Edit Group Modal
+        const editGroupNameInput = document.getElementById('edit-group-name');
+        const editGroupError = document.getElementById('edit-group-error');
+        const saveEditedGroupBtn = document.getElementById('save-edited-group-btn');
+        const cancelEditGroupBtn = document.getElementById('cancel-edit-group-btn');
+
 
         // Exchange rates (simplified, hardcoded)
         const EXCHANGE_RATES = {
@@ -528,7 +724,7 @@
             if (toCurrency === 'INR') {
                 return valueInINR;
             } else if (toCurrency === 'USD') {
-                return valueInINR * EXCHANGE_RATES.INR_TO_USD;
+                return valueInINR * EXCHANGE_R.INR_TO_USD;
             } else if (toCurrency === 'EUR') {
                 return valueInINR * EXCHANGE_RATES.INR_TO_EUR;
             }
@@ -536,23 +732,37 @@
         }
 
         // --- UI State Management ---
+        let currentActiveView = 'dashboard'; // Default view
+
         function showLoading() {
             loadingState.classList.remove('hidden');
             errorState.classList.add('hidden');
+            authView.classList.add('hidden'); // Hide auth view during loading
             mainContent.classList.add('hidden');
         }
 
         function showError(message) {
             loadingState.classList.add('hidden');
             errorState.classList.remove('hidden');
+            authView.classList.add('hidden');
             mainContent.classList.add('hidden');
             errorMessageSpan.textContent = message;
+        }
+
+        function showAuthView() {
+            loadingState.classList.add('hidden');
+            errorState.classList.add('hidden');
+            mainContent.classList.add('hidden');
+            authView.classList.remove('hidden');
+            authErrorMessage.classList.add('hidden'); // Clear previous auth errors
         }
 
         function showApp() {
             loadingState.classList.add('hidden');
             errorState.classList.add('hidden');
+            authView.classList.add('hidden'); // Hide auth view when authenticated
             mainContent.classList.remove('hidden');
+            renderActiveView(currentActiveView); // Render the initial view
         }
 
         function showModal(modalElement, errorElement) {
@@ -564,6 +774,33 @@
             modalElement.classList.add('hidden');
             if (errorElement) errorElement.classList.add('hidden');
         }
+
+        // Function to switch between views
+        function renderActiveView(viewId) {
+            currentActiveView = viewId;
+            // Hide all view sections
+            dashboardView.classList.add('hidden');
+            accountsView.classList.add('hidden');
+            settingsView.classList.add('hidden');
+
+            // Remove active class from all nav links
+            navDashboardBtn.classList.remove('active');
+            navAccountsBtn.classList.remove('active');
+            navSettingsBtn.classList.remove('active');
+
+            // Show the selected view and set active nav link
+            if (viewId === 'dashboard') {
+                dashboardView.classList.remove('hidden');
+                navDashboardBtn.classList.add('active');
+            } else if (viewId === 'accounts') {
+                accountsView.classList.remove('hidden');
+                navAccountsBtn.classList.add('active');
+            } else if (viewId === 'settings') {
+                settingsView.classList.remove('hidden');
+                navSettingsBtn.classList.add('active');
+            }
+        }
+
 
         // --- Firebase Initialization ---
         async function initializeFirebase() {
@@ -584,14 +821,9 @@
                             await loadInitialData(currentUser.uid);
                             showApp();
                         } else {
-                            console.log("No user signed in. Attempting anonymous sign-in...");
-                            try {
-                                await signInAnonymously(auth);
-                                console.log("Signed in anonymously.");
-                            } catch (err) {
-                                console.error("Firebase Auth Error:", err);
-                                showError("Failed to authenticate. Please check Firebase Auth settings (Anonymous Sign-in).");
-                            }
+                            console.log("No user signed in. Showing auth view...");
+                            currentUser = null; // Ensure currentUser is null if unauthenticated
+                            showAuthView(); // Show the login/registration page
                         }
                     });
 
@@ -607,6 +839,7 @@
         // --- Data Fetching and Real-time Listeners ---
         async function loadInitialData(uid) {
             if (!db || !uid) {
+                // This case should ideally not be hit if onAuthStateChanged works correctly
                 showError("Database or User ID not available for data loading.");
                 return;
             }
@@ -643,6 +876,17 @@
             }, (err) => {
                 console.error("Error fetching net worth snapshots:", err);
                 showError("Failed to load net worth history.");
+            });
+
+            // New: Custom Account Groups listener
+            const customAccountGroupsCollectionRef = collection(db, `artifacts/${firebaseConfig.projectId}/users/${uid}/customAccountGroups`);
+            onSnapshot(customAccountGroupsCollectionRef, (snapshot) => {
+                customAccountGroupsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderAccountGroupsList(); // Render the list in settings
+                populateAccountGroupDropdowns(); // Update dropdowns in modals
+            }, (err) => {
+                console.error("Error fetching custom account groups:", err);
+                showError("Failed to load custom account groups.");
             });
         }
 
@@ -728,7 +972,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
                                 </button>
                                 <button data-id="${asset.id}" class="edit-asset-btn bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full shadow-sm transition duration-200 ease-in-out transform hover:scale-110" title="Edit Asset">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 </button>
                                 <button data-id="${asset.id}" class="delete-asset-btn bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-sm transition duration-200 ease-in-out transform hover:scale-110" title="Delete Asset">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
@@ -927,12 +1171,68 @@
             }
         }
 
+        // New: Render custom account groups list in settings
+        function renderAccountGroupsList() {
+            accountGroupsTableBody.innerHTML = ''; // Clear existing rows
+            if (customAccountGroupsData.length === 0) {
+                noGroupsMessage.classList.remove('hidden');
+                accountGroupsTable.classList.add('hidden');
+            } else {
+                noGroupsMessage.classList.add('hidden');
+                accountGroupsTable.classList.remove('hidden');
+                customAccountGroupsData.forEach(group => {
+                    const row = accountGroupsTableBody.insertRow();
+                    row.className = 'hover:bg-gray-50';
+                    row.innerHTML = `
+                        <td class="py-2 px-4 text-gray-900">${group.name}</td>
+                        <td class="py-2 px-4">
+                            <button data-id="${group.id}" data-name="${group.name}" class="edit-group-btn bg-yellow-500 hover:bg-yellow-600 text-white p-1 rounded-full text-xs shadow-sm mr-2" title="Edit Group">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button data-id="${group.id}" class="delete-group-btn bg-red-500 hover:bg-red-600 text-white p-1 rounded-full text-xs shadow-sm" title="Delete Group">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                        </td>
+                    `;
+                    row.querySelector('.edit-group-btn').addEventListener('click', (e) => openEditGroupModal(e.currentTarget.dataset.id, e.currentTarget.dataset.name));
+                    row.querySelector('.delete-group-btn').addEventListener('click', (e) => handleDeleteGroup(e.currentTarget.dataset.id, e.currentTarget.dataset.name));
+                });
+            }
+        }
+
+        // New: Populate account group dropdowns in Add/Edit Asset modals
+        function populateAccountGroupDropdowns() {
+            // Clear existing options, except the "Select a group" one
+            newAssetGroupSelect.innerHTML = '<option value="">Select a group (Optional)</option>';
+            editAssetGroupSelect.innerHTML = '<option value="">Select a group (Optional)</option>';
+
+            // Default groups
+            const defaultGroups = ["Banks", "Brokerage Accounts", "Mutual Funds", "Immovable assets", "Other"];
+
+            // Combine default and custom groups, ensuring uniqueness and sorting
+            const allGroups = [...new Set([...defaultGroups, ...customAccountGroupsData.map(g => g.name)])].sort();
+
+            allGroups.forEach(groupName => {
+                const option1 = document.createElement('option');
+                option1.value = groupName;
+                option1.textContent = groupName;
+                newAssetGroupSelect.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = groupName;
+                option2.textContent = groupName;
+                editAssetGroupSelect.appendChild(option2);
+            });
+        }
+
+
         // --- Modal Functions ---
         function openAddAssetModal() {
             newAssetNameInput.value = '';
             newAssetValueInput.value = '';
             newAssetCurrencySelect.value = 'INR';
-            newAssetGroupSelect.value = '';
+            newAssetGroupSelect.value = ''; // Reset to default
+            populateAccountGroupDropdowns(); // Ensure dropdown is up-to-date
             showModal(addAssetModal, addAssetError);
         }
 
@@ -970,7 +1270,8 @@
             const assetToEdit = assetsData.find(asset => asset.id === assetId);
             if (assetToEdit) {
                 editAssetNameInput.value = assetToEdit.name;
-                editAssetGroupSelect.value = assetToEdit.group || '';
+                populateAccountGroupDropdowns(); // Ensure dropdown is up-to-date
+                editAssetGroupSelect.value = assetToEdit.group || ''; // Set current group
                 showModal(editAssetModal, editAssetError);
             } else {
                 console.error("Asset not found for editing:", assetId);
@@ -983,7 +1284,91 @@
             currentEditAssetId = null;
         }
 
-        // --- Event Handlers ---
+        function openEditGroupModal(groupId, groupName) {
+            currentEditGroupId = groupId;
+            editGroupNameInput.value = groupName;
+            showModal(editGroupModal, editGroupError);
+        }
+
+        function closeEditGroupModal() {
+            hideModal(editGroupModal, editGroupError);
+            currentEditGroupId = null;
+            editGroupNameInput.value = '';
+        }
+
+
+        // --- Authentication Handlers ---
+        function toggleAuthMode() {
+            isSignInMode = !isSignInMode;
+            if (isSignInMode) {
+                authFormTitle.textContent = 'Sign In';
+                signInBtn.classList.remove('hidden');
+                signUpBtn.classList.add('hidden');
+                toggleAuthModeBtn.textContent = 'Switch to Sign Up';
+            } else {
+                authFormTitle.textContent = 'Sign Up';
+                signInBtn.classList.add('hidden');
+                signUpBtn.classList.remove('hidden');
+                toggleAuthModeBtn.textContent = 'Switch to Sign In';
+            }
+            authErrorMessage.classList.add('hidden'); // Clear error on mode switch
+            authEmailInput.value = '';
+            authPasswordInput.value = '';
+        }
+
+        async function handleSignIn() {
+            const email = authEmailInput.value.trim();
+            const password = authPasswordInput.value.trim();
+            if (!email || !password) {
+                authErrorMessage.textContent = "Please enter both email and password.";
+                authErrorMessage.classList.remove('hidden');
+                return;
+            }
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged will handle showing the main app
+            } catch (error) {
+                console.error("Sign In Error:", error);
+                authErrorMessage.textContent = error.message;
+                authErrorMessage.classList.remove('hidden');
+            }
+        }
+
+        async function handleSignUp() {
+            const email = authEmailInput.value.trim();
+            const password = authPasswordInput.value.trim();
+            if (!email || !password) {
+                authErrorMessage.textContent = "Please enter both email and password.";
+                authErrorMessage.classList.remove('hidden');
+                return;
+            }
+            if (password.length < 6) {
+                authErrorMessage.textContent = "Password should be at least 6 characters.";
+                authErrorMessage.classList.remove('hidden');
+                return;
+            }
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged will handle showing the main app
+            } catch (error) {
+                console.error("Sign Up Error:", error);
+                authErrorMessage.textContent = error.message;
+                authErrorMessage.classList.remove('hidden');
+            }
+        }
+
+        async function handleSignOut() {
+            try {
+                await signOut(auth);
+                // onAuthStateChanged will handle showing the auth view
+            } catch (error) {
+                console.error("Sign Out Error:", error);
+                showError("Failed to sign out: " + error.message);
+            }
+        }
+
+
+        // --- Event Handlers for App Functionality ---
         async function handleAddAssetSubmit() {
             if (!currentUser || !db) {
                 addAssetError.textContent = "User not authenticated or database not ready.";
@@ -1214,9 +1599,120 @@
             }
         }
 
+        // New: Account Group Management Handlers
+        async function handleAddGroup() {
+            if (!currentUser || !db) {
+                accountGroupError.textContent = "User not authenticated or database not ready.";
+                accountGroupError.classList.remove('hidden');
+                return;
+            }
+            const groupName = newGroupNameInput.value.trim();
+            if (!groupName) {
+                accountGroupError.textContent = "Group name cannot be empty.";
+                accountGroupError.classList.remove('hidden');
+                return;
+            }
+
+            // Check for duplicate group names (case-insensitive)
+            const isDuplicate = customAccountGroupsData.some(group => group.name.toLowerCase() === groupName.toLowerCase());
+            if (isDuplicate) {
+                accountGroupError.textContent = "Group with this name already exists.";
+                accountGroupError.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const groupsCollectionRef = collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/customAccountGroups`);
+                await addDoc(groupsCollectionRef, {
+                    name: groupName,
+                    createdAt: Date.now()
+                });
+                newGroupNameInput.value = '';
+                accountGroupError.classList.add('hidden');
+            } catch (err) {
+                console.error("Error adding group:", err);
+                accountGroupError.textContent = "Failed to add group: " + err.message;
+                accountGroupError.classList.remove('hidden');
+            }
+        }
+
+        async function handleEditGroupSubmit() {
+            if (!currentUser || !db || !currentEditGroupId) {
+                editGroupError.textContent = "User not authenticated or database not ready.";
+                editGroupError.classList.remove('hidden');
+                return;
+            }
+            const newName = editGroupNameInput.value.trim();
+            if (!newName) {
+                editGroupError.textContent = "Group name cannot be empty.";
+                editGroupError.classList.remove('hidden');
+                return;
+            }
+
+            // Check for duplicate group names (excluding the current group being edited)
+            const isDuplicate = customAccountGroupsData.some(group =>
+                group.id !== currentEditGroupId && group.name.toLowerCase() === newName.toLowerCase()
+            );
+            if (isDuplicate) {
+                editGroupError.textContent = "Another group with this name already exists.";
+                editGroupError.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const groupDocRef = doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/customAccountGroups`, currentEditGroupId);
+                await updateDoc(groupDocRef, {
+                    name: newName
+                });
+                closeEditGroupModal();
+            } catch (err) {
+                console.error("Error editing group:", err);
+                editGroupError.textContent = "Failed to edit group: " + err.message;
+                editGroupError.classList.remove('hidden');
+            }
+        }
+
+        async function handleDeleteGroup(groupId, groupName) {
+            if (!currentUser || !db) {
+                showError("User not authenticated or database not ready.");
+                return;
+            }
+            if (!confirm(`Are you sure you want to delete the group "${groupName}"? Assets assigned to this group will revert to "Other".`)) {
+                return;
+            }
+
+            try {
+                // Delete the group document
+                await deleteDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/customAccountGroups`, groupId));
+
+                // Update any assets that belong to this group to 'Other'
+                const assetsRef = collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`);
+                const q = query(assetsRef, where("group", "==", groupName));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach(async (assetDoc) => {
+                    await updateDoc(assetDoc.ref, { group: 'Other' });
+                });
+            } catch (err) {
+                console.error("Error deleting group:", err);
+                showError("Failed to delete group: " + err.message);
+            }
+        }
+
 
         // --- Event Listeners Setup ---
         document.addEventListener('DOMContentLoaded', initializeFirebase);
+
+        // Authentication listeners
+        toggleAuthModeBtn.addEventListener('click', toggleAuthMode);
+        signInBtn.addEventListener('click', handleSignIn);
+        signUpBtn.addEventListener('click', handleSignUp);
+        signOutBtn.addEventListener('click', handleSignOut); // Sign out button listener
+
+        // Navigation listeners
+        navDashboardBtn.addEventListener('click', () => renderActiveView('dashboard'));
+        navAccountsBtn.addEventListener('click', () => renderActiveView('accounts'));
+        navSettingsBtn.addEventListener('click', () => renderActiveView('settings'));
+
 
         currencySelect.addEventListener('change', (e) => {
             primaryDisplayCurrency = e.target.value;
@@ -1227,12 +1723,15 @@
         });
 
         takeSnapshotBtn.addEventListener('click', handleTakeSnapshot);
+
+        // Asset management buttons (now in Accounts view)
         addAssetBtn.addEventListener('click', openAddAssetModal);
+        exportCsvBtn.addEventListener('click', exportAssetsToCSV);
+
+        // Modals buttons
         saveNewAssetBtn.addEventListener('click', handleAddAssetSubmit);
         cancelAddAssetBtn.addEventListener('click', closeAddAssetModal);
-        exportCsvBtn.addEventListener('click', exportAssetsToCSV); // New: CSV export button listener
 
-        // Adjust Value Modal radio button logic
         transactionTypeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 if (e.target.value === 'absolute') {
@@ -1249,6 +1748,11 @@
 
         saveEditedAssetBtn.addEventListener('click', handleEditAssetSubmit);
         cancelEditAssetBtn.addEventListener('click', closeEditAssetModal);
+
+        // New: Account Group Management Listeners
+        addGroupBtn.addEventListener('click', handleAddGroup);
+        saveEditedGroupBtn.addEventListener('click', handleEditGroupSubmit);
+        cancelEditGroupBtn.addEventListener('click', closeEditGroupModal);
 
     </script>
 </body>
