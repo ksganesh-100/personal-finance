@@ -187,7 +187,6 @@
                         <div class="flex justify-end mb-4">
                             <label for="chart-aggregation-select" class="mr-2 text-gray-700">View by:</label>
                             <select id="chart-aggregation-select" class="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                                <option value="daily">Day</option>
                                 <option value="monthly">Month</option>
                                 <option value="quarterly">Quarter</option>
                                 <option value="yearly">Year</option>
@@ -346,11 +345,40 @@
                     </div>
                 </div>
 
-                <!-- Manage Currency Conversion Rates (Future Feature) -->
+                <!-- Manage Currency Conversion Rates -->
                 <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
                     <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Currency Conversion Rates</h2>
-                    <p class="text-gray-600">This feature will allow you to update currency exchange rates manually or fetch them from an API.</p>
-                    <p class="text-gray-500 mt-2">*(Coming Soon!)*</p>
+                    <p id="currency-rate-error" class="text-red-500 mb-4 hidden"></p>
+                    <div class="mb-4">
+                        <label for="usd-to-inr-rate" class="block text-gray-700 text-sm font-bold mb-2">1 USD = <span id="usd-currency-display">INR</span></label>
+                        <input
+                            type="number"
+                            id="usd-to-inr-rate"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="e.g., 83.50"
+                        />
+                    </div>
+                    <div class="mb-6">
+                        <label for="eur-to-inr-rate" class="block text-gray-700 text-sm font-bold mb-2">1 EUR = <span id="eur-currency-display">INR</span></label>
+                        <input
+                            type="number"
+                            id="eur-to-inr-rate"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="e.g., 90.00"
+                        />
+                    </div>
+                    <div>
+                        <button
+                            id="save-currency-rates-btn"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            Save Rates
+                        </button>
+                    </div>
                 </div>
 
                 <!-- New: Import/Export Net Worth History -->
@@ -665,7 +693,7 @@
         let selectedAssetForAdjustment = null; // Stores the asset object for adjustment modal
         let currentEditAssetId = null; // Stores the ID of the asset being edited
         let currentEditGroupId = null; // New: Stores the ID of the group being edited
-        let currentChartAggregation = 'daily'; // Default chart aggregation
+        let currentChartAggregation = 'monthly'; // Default chart aggregation, changed from 'daily'
 
         // Chart instances
         let netWorthChartInstance = null;
@@ -739,6 +767,15 @@
         const accountGroupsTable = document.getElementById('account-groups-table');
         const accountGroupsTableBody = document.getElementById('account-groups-table-body');
 
+        // Currency Rate Management elements
+        const usdToInrRateInput = document.getElementById('usd-to-inr-rate');
+        const eurToInrRateInput = document.getElementById('eur-to-inr-rate');
+        const saveCurrencyRatesBtn = document.getElementById('save-currency-rates-btn');
+        const currencyRateError = document.getElementById('currency-rate-error');
+        const usdCurrencyDisplay = document.getElementById('usd-currency-display');
+        const eurCurrencyDisplay = document.getElementById('eur-currency-display');
+
+
         // CSV History Import/Export elements
         const csvUploadInput = document.getElementById('csv-upload-input');
         const uploadHistoryCsvBtn = document.getElementById('upload-history-csv-btn');
@@ -786,8 +823,8 @@
         const cancelEditGroupBtn = document.getElementById('cancel-edit-group-btn');
 
 
-        // Exchange rates (simplified, hardcoded)
-        const EXCHANGE_RATES = {
+        // Exchange rates (simplified, hardcoded initially, will be loaded from Firestore)
+        let EXCHANGE_RATES = {
             USD_TO_INR: 83.5,
             EUR_TO_INR: 90.0,
             INR_TO_USD: 1 / 83.5,
@@ -812,9 +849,9 @@
             if (toCurrency === 'INR') {
                 return valueInINR;
             } else if (toCurrency === 'USD') {
-                return valueInINR * EXCHANGE_R.INR_TO_USD;
+                return valueInINR * EXCHANGE_RATES.INR_TO_USD;
             } else if (toCurrency === 'EUR') {
-                return valueInINR * EXCHANGE_R.INR_TO_EUR;
+                return valueInINR * EXCHANGE_RATES.INR_TO_EUR;
             }
             return value;
         }
@@ -886,6 +923,7 @@
             } else if (viewId === 'settings') {
                 settingsView.classList.remove('hidden');
                 navSettingsBtn.classList.add('active');
+                renderCurrencyRatesSettings(); // Populate currency rates when settings is opened
             }
         }
 
@@ -976,6 +1014,34 @@
             }, (err) => {
                 console.error("Error fetching custom account groups:", err);
                 showError("Failed to load custom account groups.");
+            });
+
+            // New: Currency Rates listener
+            const currencyRatesDocRef = doc(db, `artifacts/${firebaseConfig.projectId}/users/${uid}/settings/currencyRates`);
+            onSnapshot(currencyRatesDocRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const rates = docSnapshot.data();
+                    EXCHANGE_RATES.USD_TO_INR = rates.USD_TO_INR || EXCHANGE_RATES.USD_TO_INR;
+                    EXCHANGE_RATES.EUR_TO_INR = rates.EUR_TO_INR || EXCHANGE_RATES.EUR_TO_INR;
+                    // Derive other rates if needed, or store them directly
+                    EXCHANGE_RATES.INR_TO_USD = 1 / EXCHANGE_RATES.USD_TO_INR;
+                    EXCHANGE_RATES.INR_TO_EUR = 1 / EXCHANGE_RATES.EUR_TO_INR;
+                    EXCHANGE_RATES.USD_TO_EUR = EXCHANGE_RATES.USD_TO_INR / EXCHANGE_RATES.EUR_TO_INR;
+                    EXCHANGE_RATES.EUR_TO_USD = EXCHANGE_RATES.EUR_TO_INR / EXCHANGE_RATES.USD_TO_INR;
+                    console.log("Currency rates updated from Firestore:", EXCHANGE_RATES);
+                } else {
+                    console.log("No custom currency rates found, using defaults.");
+                }
+                // Re-render anything dependent on currency rates
+                updateNetWorthSummary();
+                renderAssetsTable();
+                renderNetWorthChart();
+                renderAllocationChart();
+                renderEquityDebtAllocationChart();
+                renderCurrencyRatesSettings(); // Update the input fields in settings
+            }, (err) => {
+                console.error("Error fetching currency rates:", err);
+                showError("Failed to load currency rates.");
             });
         }
 
@@ -1149,9 +1215,6 @@
                 let key;
 
                 switch (period) {
-                    case 'daily':
-                        key = date.toLocaleDateString(); // e.g., "7/31/2025"
-                        break;
                     case 'monthly':
                         key = date.toLocaleString('default', { month: 'short', year: 'numeric' }); // e.g., "Jul 2025"
                         break;
@@ -1162,8 +1225,8 @@
                     case 'yearly':
                         key = date.getFullYear().toString(); // e.g., "2025"
                         break;
-                    default:
-                        key = date.toLocaleString(); // Fallback to full timestamp for 'daily' if not specified
+                    default: // Fallback to monthly if an unexpected value is passed
+                        key = date.toLocaleString('default', { month: 'short', year: 'numeric' });
                 }
 
                 // Always store the latest snapshot for a given period key
@@ -1456,6 +1519,51 @@
                 option2.textContent = groupName;
                 editAssetGroupSelect.appendChild(option2);
             });
+        }
+
+        // New: Render currency rates in settings
+        function renderCurrencyRatesSettings() {
+            usdToInrRateInput.value = EXCHANGE_RATES.USD_TO_INR.toFixed(2);
+            eurToInrRateInput.value = EXCHANGE_RATES.EUR_TO_INR.toFixed(2);
+            usdCurrencyDisplay.textContent = primaryDisplayCurrency;
+            eurCurrencyDisplay.textContent = primaryDisplayCurrency;
+            currencyRateError.classList.add('hidden'); // Hide any previous error
+        }
+
+        // New: Handle saving currency rates
+        async function handleSaveCurrencyRates() {
+            if (!currentUser || !db) {
+                currencyRateError.textContent = "User not authenticated or database not ready.";
+                currencyRateError.classList.remove('hidden');
+                return;
+            }
+
+            const usdRate = parseFloat(usdToInrRateInput.value);
+            const eurRate = parseFloat(eurToInrRateInput.value);
+
+            if (isNaN(usdRate) || usdRate <= 0 || isNaN(eurRate) || eurRate <= 0) {
+                currencyRateError.textContent = "Please enter valid positive numbers for exchange rates.";
+                currencyRateError.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const currencyRatesDocRef = doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/settings/currencyRates`);
+                await setDoc(currencyRatesDocRef, {
+                    USD_TO_INR: usdRate,
+                    EUR_TO_INR: eurRate,
+                    updatedAt: Date.now()
+                });
+                currencyRateError.textContent = "Currency rates saved successfully!";
+                currencyRateError.classList.remove('hidden', 'text-red-500');
+                currencyRateError.classList.add('text-green-500');
+                // Rates will be reloaded via onSnapshot and UI updated
+            } catch (err) {
+                console.error("Error saving currency rates:", err);
+                currencyRateError.textContent = "Failed to save rates: " + err.message;
+                currencyRateError.classList.remove('hidden', 'text-green-500');
+                currencyRateError.classList.add('text-red-500');
+            }
         }
 
 
@@ -2116,6 +2224,8 @@
             renderNetWorthChart();
             renderAllocationChart();
             renderEquityDebtAllocationChart(); // Re-render equity/debt chart
+            // No need to call renderCurrencyRatesSettings here, as it's called when navigating to settings
+            // and onSnapshot for currency rates will trigger updates.
         });
 
         takeSnapshotBtn.addEventListener('click', handleTakeSnapshot);
@@ -2159,6 +2269,9 @@
             currentChartAggregation = e.target.value;
             renderNetWorthChart(); // Re-render chart with new aggregation
         });
+
+        // New: Currency Rate Management Listener
+        saveCurrencyRatesBtn.addEventListener('click', handleSaveCurrencyRates);
 
     </script>
 </body>
