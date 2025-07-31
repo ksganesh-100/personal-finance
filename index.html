@@ -182,22 +182,44 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
                         Net Worth History
                     </h2>
+                    <div class="flex justify-end mb-4">
+                        <label for="chart-aggregation-select" class="mr-2 text-gray-700">View by:</label>
+                        <select id="chart-aggregation-select" class="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            <option value="daily">Day</option>
+                            <option value="monthly">Month</option>
+                            <option value="quarterly">Quarter</option>
+                            <option value="yearly">Year</option>
+                        </select>
+                    </div>
                     <p id="no-history-message" class="text-gray-500 text-center py-8 hidden">Take a few snapshots to see your net worth history here.</p>
                     <div id="net-worth-chart-container" class="relative w-full h-80 hidden">
                         <canvas id="netWorthChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Asset Allocation Pie Chart -->
+                <!-- Asset Distribution Pie Chart -->
                 <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
                     <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
                         <!-- LayoutGrid Icon -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                        Asset Allocation
+                        Asset Distribution by Group
                     </h2>
                     <p id="no-allocation-message" class="text-gray-500 text-center py-8 hidden">Add assets to see your allocation breakdown.</p>
                     <div id="allocation-chart-container" class="relative w-full h-80 hidden">
                         <canvas id="assetAllocationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- New: Equity vs. Non-Equity Allocation Pie Chart -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <!-- Pie Chart Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><path d="M10 3.129a10 10 0 1 1-6.983 6.983"></path><path d="M10 3.129v6.871h10"></path></svg>
+                        Equity vs. Non-Equity Allocation
+                    </h2>
+                    <p id="no-equity-allocation-message" class="text-gray-500 text-center py-8 hidden">Enter "Equity %" for your assets to see this allocation.</p>
+                    <div id="equity-allocation-chart-container" class="relative w-full h-80 hidden">
+                        <canvas id="equityAllocationChart"></canvas>
                     </div>
                 </div>
 
@@ -261,6 +283,7 @@
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Group</th>
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value</th>
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value (<span id="display-currency-assets">INR</span>)</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Equity %</th>
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Last Updated</th>
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Actions</th>
                                 </tr>
@@ -320,42 +343,30 @@
                     </div>
                 </div>
 
-                <!-- Manage Currency Conversion Rates -->
+                <!-- Manage Currency Conversion Rates (Future Feature) -->
                 <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
                     <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Currency Conversion Rates</h2>
-                    <p id="currency-rate-error" class="text-red-500 mb-4 hidden"></p>
+                    <p class="text-gray-600">This feature will allow you to update currency exchange rates manually or fetch them from an API.</p>
+                    <p class="text-gray-500 mt-2">*(Coming Soon!)*</p>
+                </div>
+
+                <!-- New: Import/Export Net Worth History -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Import/Export Net Worth History</h2>
+                    <p id="history-csv-message" class="text-red-500 mb-4 hidden"></p>
+
                     <div class="mb-4">
-                        <label for="usd-to-inr-rate" class="block text-gray-700 text-sm font-bold mb-2">USD to INR:</label>
-                        <input
-                            type="number"
-                            id="usd-to-inr-rate"
-                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            min="0.01"
-                            step="0.01"
-                        />
-                    </div>
-                    <div class="mb-6">
-                        <label for="eur-to-inr-rate" class="block text-gray-700 text-sm font-bold mb-2">EUR to INR:</label>
-                        <input
-                            type="number"
-                            id="eur-to-inr-rate"
-                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            min="0.01"
-                            step="0.01"
-                        />
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <button
-                            id="save-currency-rates-btn"
-                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                        >
-                            Save Rates
+                        <label for="csv-upload-input" class="block text-gray-700 text-sm font-bold mb-2">Upload History (CSV):</label>
+                        <input type="file" id="csv-upload-input" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                        <button id="upload-history-csv-btn" class="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Upload CSV
                         </button>
                     </div>
-                    <div class="mt-4 text-gray-700">
-                        <p>Current Rates:</p>
-                        <p>USD to INR: <span id="display-usd-inr">N/A</span></p>
-                        <p>EUR to INR: <span id="display-eur-inr">N/A</span></p>
+
+                    <div>
+                        <button id="export-history-csv-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Export History to CSV
+                        </button>
                     </div>
                 </div>
 
@@ -400,7 +411,7 @@
                     <option value="EUR">EUR</option>
                 </select>
             </div>
-            <div class="mb-6">
+            <div class="mb-4">
                 <label for="new-asset-group" class="block text-gray-700 text-sm font-bold mb-2">Asset Group:</label>
                 <select
                     id="new-asset-group"
@@ -409,6 +420,20 @@
                     <option value="">Select a group (Optional)</option>
                     <!-- Options will be dynamically populated by JS -->
                 </select>
+            </div>
+            <!-- New: Equity Percentage Input for Add Asset Modal -->
+            <div class="mb-6">
+                <label for="new-asset-equity-percentage" class="block text-gray-700 text-sm font-bold mb-2">Equity % (0-100):</label>
+                <input
+                    type="number"
+                    id="new-asset-equity-percentage"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="100"
+                    placeholder="e.g., 75"
+                />
             </div>
             <div class="flex items-center justify-between">
                 <button
@@ -531,7 +556,7 @@
                     placeholder="e.g., Savings Account"
                 />
             </div>
-            <div class="mb-6">
+            <div class="mb-4">
                 <label for="edit-asset-group" class="block text-gray-700 text-sm font-bold mb-2">Asset Group:</label>
                 <select
                     id="edit-asset-group"
@@ -540,6 +565,19 @@
                     <option value="">Select a group (Optional)</option>
                     <!-- Options will be dynamically populated by JS -->
                 </select>
+            </div>
+            <!-- New: Equity Percentage Input for Edit Asset Modal -->
+            <div class="mb-6">
+                <label for="edit-asset-equity-percentage" class="block text-gray-700 text-sm font-bold mb-2">Equity % (0-100):</label>
+                <input
+                    type="number"
+                    id="edit-asset-equity-percentage"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    min="0"
+                    max="100"
+                    step="1"
+                    placeholder="e.g., 75"
+                />
             </div>
             <div class="flex items-center justify-between">
                 <button
@@ -619,16 +657,17 @@
         let assetsData = [];
         let transactionsData = [];
         let netWorthSnapshotsData = [];
-        let customAccountGroupsData = []; // Stores custom account groups
-        let exchangeRatesData = {}; // New: Stores custom exchange rates
+        let customAccountGroupsData = []; // New: Stores custom account groups
         let primaryDisplayCurrency = 'INR';
         let selectedAssetForAdjustment = null; // Stores the asset object for adjustment modal
         let currentEditAssetId = null; // Stores the ID of the asset being edited
-        let currentEditGroupId = null; // Stores the ID of the group being edited
+        let currentEditGroupId = null; // New: Stores the ID of the group being edited
+        let currentChartAggregation = 'daily'; // Default chart aggregation
 
         // Chart instances
         let netWorthChartInstance = null;
         let allocationChartInstance = null;
+        let equityAllocationChartInstance = null; // New: Equity Allocation Chart instance
 
         // DOM Element References
         const loadingState = document.getElementById('loading-state');
@@ -671,9 +710,13 @@
         const assetAllocationChartCanvas = document.getElementById('assetAllocationChart');
         const noAllocationMessage = document.getElementById('no-allocation-message');
         const allocationChartContainer = document.getElementById('allocation-chart-container');
+        const equityAllocationChartCanvas = document.getElementById('equityAllocationChart'); // New: Equity Allocation Chart Canvas
+        const noEquityAllocationMessage = document.getElementById('no-equity-allocation-message'); // New: Equity Allocation Message
+        const equityAllocationChartContainer = document.getElementById('equity-allocation-chart-container'); // New: Equity Allocation Chart Container
         const transactionsTableBody = document.getElementById('transactions-table-body');
         const noTransactionsMessage = document.getElementById('no-transactions-message');
         const transactionsTableContainer = document.getElementById('transactions-table-container');
+        const chartAggregationSelect = document.getElementById('chart-aggregation-select'); // New: Chart aggregation select
 
 
         // Accounts View specific elements
@@ -693,13 +736,11 @@
         const accountGroupsTable = document.getElementById('account-groups-table');
         const accountGroupsTableBody = document.getElementById('account-groups-table-body');
 
-        // New: Currency Rate Management Elements
-        const usdToInrRateInput = document.getElementById('usd-to-inr-rate');
-        const eurToInrRateInput = document.getElementById('eur-to-inr-rate');
-        const saveCurrencyRatesBtn = document.getElementById('save-currency-rates-btn');
-        const currencyRateError = document.getElementById('currency-rate-error');
-        const displayUsdInr = document.getElementById('display-usd-inr');
-        const displayEurInr = document.getElementById('display-eur-inr');
+        // CSV History Import/Export elements
+        const csvUploadInput = document.getElementById('csv-upload-input');
+        const uploadHistoryCsvBtn = document.getElementById('upload-history-csv-btn');
+        const exportHistoryCsvBtn = document.getElementById('export-history-csv-btn');
+        const historyCsvMessage = document.getElementById('history-csv-message');
 
 
         // Modals
@@ -709,6 +750,7 @@
         const newAssetValueInput = document.getElementById('new-asset-value');
         const newAssetCurrencySelect = document.getElementById('new-asset-currency');
         const newAssetGroupSelect = document.getElementById('new-asset-group');
+        const newAssetEquityPercentageInput = document.getElementById('new-asset-equity-percentage'); // New: Equity % for Add Asset
         const saveNewAssetBtn = document.getElementById('save-new-asset-btn');
         const cancelAddAssetBtn = document.getElementById('cancel-add-asset-btn');
 
@@ -730,6 +772,7 @@
         const editAssetError = document.getElementById('edit-asset-error');
         const editAssetNameInput = document.getElementById('edit-asset-name');
         const editAssetGroupSelect = document.getElementById('edit-asset-group');
+        const editAssetEquityPercentageInput = document.getElementById('edit-asset-equity-percentage'); // New: Equity % for Edit Asset
         const saveEditedAssetBtn = document.getElementById('save-edited-asset-btn');
         const cancelEditAssetBtn = document.getElementById('cancel-edit-asset-btn');
 
@@ -740,32 +783,35 @@
         const cancelEditGroupBtn = document.getElementById('cancel-edit-group-btn');
 
 
+        // Exchange rates (simplified, hardcoded)
+        const EXCHANGE_RATES = {
+            USD_TO_INR: 83.5,
+            EUR_TO_INR: 90.0,
+            INR_TO_USD: 1 / 83.5,
+            INR_TO_EUR: 1 / 90.0,
+            USD_TO_EUR: 0.92,
+            EUR_TO_USD: 1 / 0.92
+        };
+
         // Function to convert value to a target currency
         function convertCurrency(value, fromCurrency, toCurrency) {
             if (fromCurrency === toCurrency) {
                 return value;
             }
 
-            // Ensure exchange rates are loaded
-            if (Object.keys(exchangeRatesData).length === 0) {
-                console.warn("Exchange rates not loaded. Using default hardcoded rates.");
-                // Fallback to initial hardcoded rates if Firestore data isn't ready
-                return value; // Or implement a more robust fallback
-            }
-
             let valueInINR = value;
             if (fromCurrency === 'USD') {
-                valueInINR = value * (exchangeRatesData['USD_INR'] || 83.5); // Fallback to default if specific rate not found
+                valueInINR = value * EXCHANGE_RATES.USD_TO_INR;
             } else if (fromCurrency === 'EUR') {
-                valueInINR = value * (exchangeRatesData['EUR_INR'] || 90.0); // Fallback to default
+                valueInINR = value * EXCHANGE_RATES.EUR_TO_INR;
             }
 
             if (toCurrency === 'INR') {
                 return valueInINR;
             } else if (toCurrency === 'USD') {
-                return valueInINR / (exchangeRatesData['USD_INR'] || 83.5); // Use division for inverse
+                return valueInINR * EXCHANGE_RATES.INR_TO_USD;
             } else if (toCurrency === 'EUR') {
-                return valueInINR / (exchangeRatesData['EUR_INR'] || 90.0); // Use division for inverse
+                return valueInINR * EXCHANGE_RATES.INR_TO_EUR;
             }
             return value;
         }
@@ -837,11 +883,6 @@
             } else if (viewId === 'settings') {
                 settingsView.classList.remove('hidden');
                 navSettingsBtn.classList.add('active');
-                // When navigating to settings, populate current rates
-                usdToInrRateInput.value = exchangeRatesData['USD_INR'] || '';
-                eurToInrRateInput.value = exchangeRatesData['EUR_INR'] || '';
-                displayUsdInr.textContent = exchangeRatesData['USD_INR'] ? exchangeRatesData['USD_INR'].toFixed(2) : 'N/A';
-                displayEurInr.textContent = exchangeRatesData['EUR_INR'] ? exchangeRatesData['EUR_INR'].toFixed(2) : 'N/A';
             }
         }
 
@@ -895,6 +936,7 @@
                 renderAssetsTable();
                 updateNetWorthSummary();
                 renderAllocationChart();
+                renderEquityDebtAllocationChart(); // New: Render equity/debt chart
             }, (err) => {
                 console.error("Error fetching assets:", err);
                 showError("Failed to load assets.");
@@ -916,13 +958,13 @@
             onSnapshot(netWorthSnapshotsCollectionRef, (snapshot) => {
                 netWorthSnapshotsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 netWorthSnapshotsData.sort((a, b) => a.timestamp - b.timestamp); // Sort ascending for chart
-                renderNetWorthChart();
+                renderNetWorthChart(); // Re-render chart on data change
             }, (err) => {
                 console.error("Error fetching net worth snapshots:", err);
                 showError("Failed to load net worth history.");
             });
 
-            // Custom Account Groups listener
+            // New: Custom Account Groups listener
             const customAccountGroupsCollectionRef = collection(db, `artifacts/${firebaseConfig.projectId}/users/${uid}/customAccountGroups`);
             onSnapshot(customAccountGroupsCollectionRef, (snapshot) => {
                 customAccountGroupsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -931,33 +973,6 @@
             }, (err) => {
                 console.error("Error fetching custom account groups:", err);
                 showError("Failed to load custom account groups.");
-            });
-
-            // New: Exchange Rates listener
-            const exchangeRatesDocRef = doc(db, `artifacts/${firebaseConfig.projectId}/users/${uid}/exchangeRates`, 'user_rates');
-            onSnapshot(exchangeRatesDocRef, (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    exchangeRatesData = docSnapshot.data();
-                } else {
-                    // Set default rates if no custom rates exist
-                    exchangeRatesData = {
-                        USD_INR: 83.5,
-                        EUR_INR: 90.0
-                    };
-                    // Optionally, save these defaults to Firestore for the user
-                    // setDoc(exchangeRatesDocRef, exchangeRatesData, { merge: true });
-                }
-                // Update UI elements that display rates
-                displayUsdInr.textContent = exchangeRatesData['USD_INR'] ? exchangeRatesData['USD_INR'].toFixed(2) : 'N/A';
-                displayEurInr.textContent = exchangeRatesData['EUR_INR'] ? exchangeRatesData['EUR_INR'].toFixed(2) : 'N/A';
-                // Re-render components that depend on rates
-                updateNetWorthSummary();
-                renderAssetsTable();
-                renderNetWorthChart();
-                renderAllocationChart();
-            }, (err) => {
-                console.error("Error fetching exchange rates:", err);
-                showError("Failed to load exchange rates.");
             });
         }
 
@@ -976,6 +991,7 @@
             assetsData.forEach(asset => {
                 total += convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
             });
+            // Remove decimal points from total net worth
             totalNetWorthDisplay.textContent = formatCurrency(total, primaryDisplayCurrency, false);
             displayCurrencyAssets.textContent = primaryDisplayCurrency; // Update header
         }
@@ -983,6 +999,7 @@
         function renderAssetsTable() {
             assetsTableBody.innerHTML = ''; // Clear existing rows
 
+            // Sort assets by group and then alphabetically within groups
             const sortedAssets = [...assetsData].sort((a, b) => {
                 const groupA = a.group || 'Other';
                 const groupB = b.group || 'Other';
@@ -1004,6 +1021,7 @@
                 sortedAssets.forEach((asset, index) => {
                     const assetGroup = asset.group || 'Other';
 
+                    // Add sub-totals for each asset group
                     if (assetGroup !== currentGroup && currentGroup !== null) {
                         const subtotalRow = assetsTableBody.insertRow();
                         subtotalRow.className = 'bg-gray-100 font-semibold border-t-2 border-gray-300';
@@ -1030,6 +1048,9 @@
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap text-gray-700">
                             ${formatCurrency(convertCurrency(asset.value, asset.currency, primaryDisplayCurrency), primaryDisplayCurrency)}
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap text-gray-700">
+                            ${asset.equityPercentage !== undefined ? asset.equityPercentage + '%' : 'N/A'}
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap text-gray-700">
                             ${new Date(asset.updatedAt).toLocaleString()}
@@ -1105,8 +1126,59 @@
             }
         }
 
+        /**
+         * Aggregates net worth snapshots based on the selected period.
+         * @param {Array<Object>} snapshots - Array of net worth snapshot objects.
+         * @param {string} period - Aggregation period ('daily', 'monthly', 'quarterly', 'yearly').
+         * @returns {{labels: Array<string>, data: Array<number>}} Aggregated labels and data.
+         */
+        function getAggregatedNetWorthData(snapshots, period) {
+            if (snapshots.length === 0) {
+                return { labels: [], data: [] };
+            }
+
+            const aggregatedMap = new Map(); // Key: formatted date string, Value: latest snapshot value
+
+            snapshots.forEach(snapshot => {
+                const date = new Date(snapshot.timestamp);
+                let key;
+
+                switch (period) {
+                    case 'daily':
+                        key = date.toLocaleDateString(); // e.g., "7/31/2025"
+                        break;
+                    case 'monthly':
+                        key = date.toLocaleString('default', { month: 'short', year: 'numeric' }); // e.g., "Jul 2025"
+                        break;
+                    case 'quarterly':
+                        const quarter = Math.floor(date.getMonth() / 3) + 1;
+                        key = `Q${quarter} ${date.getFullYear()}`; // e.g., "Q3 2025"
+                        break;
+                    case 'yearly':
+                        key = date.getFullYear().toString(); // e.g., "2025"
+                        break;
+                    default:
+                        key = date.toLocaleString(); // Fallback to full timestamp for 'daily' if not specified
+                }
+
+                // Always store the latest snapshot for a given period key
+                // This assumes snapshots are sorted by timestamp, which they are.
+                aggregatedMap.set(key, snapshot.totalNetWorth);
+            });
+
+            // Convert map to arrays, preserving insertion order for Chart.js
+            const labels = Array.from(aggregatedMap.keys());
+            const data = Array.from(aggregatedMap.values());
+
+            return { labels, data };
+        }
+
+
         function renderNetWorthChart() {
-            if (netWorthSnapshotsData.length < 2) {
+            // Get aggregated data based on current selection
+            const { labels, data } = getAggregatedNetWorthData(netWorthSnapshotsData, currentChartAggregation);
+
+            if (labels.length < 2) {
                 noHistoryMessage.classList.remove('hidden');
                 netWorthChartContainer.classList.add('hidden');
                 if (netWorthChartInstance) {
@@ -1118,10 +1190,6 @@
                 noHistoryMessage.classList.add('hidden');
                 netWorthChartContainer.classList.remove('hidden');
             }
-
-            // Point 8: Use toLocaleString() to include time for unique X-axis labels
-            const labels = netWorthSnapshotsData.map(s => new Date(s.timestamp).toLocaleString());
-            const data = netWorthSnapshotsData.map(s => s.totalNetWorth);
 
             if (netWorthChartInstance) {
                 netWorthChartInstance.data.labels = labels;
@@ -1146,19 +1214,24 @@
                         maintainAspectRatio: false,
                         scales: {
                             y: {
-                                beginAtZero: false,
+                                beginAtZero: true, // Vertical Axis starts from zero
                                 ticks: {
                                     callback: function(value) {
-                                        return formatCurrency(value, primaryDisplayCurrency);
+                                        return formatCurrency(value, primaryDisplayCurrency, false); // Remove decimal points
                                     }
                                 }
+                            },
+                            x: {
+                                // For time series, consider 'time' scale type if more precise date handling is needed,
+                                // but for aggregated data, 'category' or 'linear' with formatted labels is fine.
+                                // The current setup with formatted string labels works well for discrete aggregated points.
                             }
                         },
                         plugins: {
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return `${context.dataset.label}: ${formatCurrency(context.raw, primaryDisplayCurrency)}`;
+                                        return `${context.dataset.label}: ${formatCurrency(context.raw, primaryDisplayCurrency, false)}`; // Tooltip also without decimals
                                     }
                                 }
                             }
@@ -1239,7 +1312,93 @@
             }
         }
 
-        // Render custom account groups list in settings
+        // New: Render Equity vs. Non-Equity Allocation Chart
+        function renderEquityDebtAllocationChart() {
+            let totalEquity = 0;
+            let totalNonEquity = 0;
+
+            assetsData.forEach(asset => {
+                const valueInPrimary = convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
+                const equityPercentage = asset.equityPercentage !== undefined ? parseFloat(asset.equityPercentage) : 0;
+
+                if (!isNaN(equityPercentage) && equityPercentage >= 0 && equityPercentage <= 100) {
+                    totalEquity += valueInPrimary * (equityPercentage / 100);
+                    totalNonEquity += valueInPrimary * (1 - (equityPercentage / 100));
+                } else {
+                    // If equityPercentage is invalid or not set, consider it non-equity by default
+                    totalNonEquity += valueInPrimary;
+                }
+            });
+
+            const equityData = [
+                { name: 'Equity', value: totalEquity },
+                { name: 'Non-Equity', value: totalNonEquity }
+            ];
+
+            // Filter out categories with zero value for cleaner chart
+            const filteredEquityData = equityData.filter(d => d.value > 0);
+
+            if (filteredEquityData.length === 0) {
+                noEquityAllocationMessage.classList.remove('hidden');
+                equityAllocationChartContainer.classList.add('hidden');
+                if (equityAllocationChartInstance) {
+                    equityAllocationChartInstance.destroy();
+                    equityAllocationChartInstance = null;
+                }
+                return;
+            } else {
+                noEquityAllocationMessage.classList.add('hidden');
+                equityAllocationChartContainer.classList.remove('hidden');
+            }
+
+            const labels = filteredEquityData.map(d => d.name);
+            const data = filteredEquityData.map(d => d.value);
+            const COLORS = ['#4CAF50', '#FFC107']; // Green for Equity, Amber for Non-Equity
+
+            if (equityAllocationChartInstance) {
+                equityAllocationChartInstance.data.labels = labels;
+                equityAllocationChartInstance.data.datasets[0].data = data;
+                equityAllocationChartInstance.data.datasets[0].backgroundColor = labels.map((_, i) => COLORS[i % COLORS.length]);
+                equityAllocationChartInstance.update();
+            } else {
+                equityAllocationChartInstance = new Chart(equityAllocationChartCanvas, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: COLORS,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let sum = 0;
+                                        let dataArr = context.dataset.data;
+                                        for (let i = 0; i < dataArr.length; i++) {
+                                            sum += dataArr[i];
+                                        }
+                                        let percentage = (context.raw * 100 / sum).toFixed(0) + '%';
+                                        return `${context.label}: ${formatCurrency(context.raw, primaryDisplayCurrency)} (${percentage})`;
+                                    }
+                                }
+                            },
+                            legend: {
+                                position: 'right',
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+
+        // New: Render custom account groups list in settings
         function renderAccountGroupsList() {
             accountGroupsTableBody.innerHTML = ''; // Clear existing rows
             if (customAccountGroupsData.length === 0) {
@@ -1268,7 +1427,7 @@
             }
         }
 
-        // Populate account group dropdowns in Add/Edit Asset modals
+        // New: Populate account group dropdowns in Add/Edit Asset modals
         function populateAccountGroupDropdowns() {
             // Clear existing options, except the "Select a group" one
             newAssetGroupSelect.innerHTML = '<option value="">Select a group (Optional)</option>';
@@ -1300,6 +1459,7 @@
             newAssetValueInput.value = '';
             newAssetCurrencySelect.value = 'INR';
             newAssetGroupSelect.value = ''; // Reset to default
+            newAssetEquityPercentageInput.value = '100'; // Default to 100% equity
             populateAccountGroupDropdowns(); // Ensure dropdown is up-to-date
             showModal(addAssetModal, addAssetError);
         }
@@ -1318,7 +1478,8 @@
                 transactionAbsoluteValueInput.value = '';
                 transactionDescriptionInput.value = '';
                 // Reset radio buttons to 'add' and show amount section
-                document.querySelector('input[name="transactionType"][value="add"]').checked = true;
+                document.querySelector('input[name="transactionType"]:checked').checked = false; // Uncheck all
+                document.querySelector('input[name="transactionType"][value="add"]').checked = true; // Check 'add'
                 transactionAmountSection.classList.remove('hidden');
                 transactionAbsoluteValueSection.classList.add('hidden');
                 showModal(adjustValueModal, adjustValueError);
@@ -1340,6 +1501,7 @@
                 editAssetNameInput.value = assetToEdit.name;
                 populateAccountGroupDropdowns(); // Ensure dropdown is up-to-date
                 editAssetGroupSelect.value = assetToEdit.group || ''; // Set current group
+                editAssetEquityPercentageInput.value = assetToEdit.equityPercentage !== undefined ? assetToEdit.equityPercentage : '100'; // Set current equity % or default
                 showModal(editAssetModal, editAssetError);
             } else {
                 console.error("Asset not found for editing:", assetId);
@@ -1447,12 +1609,20 @@
             const value = parseFloat(newAssetValueInput.value);
             const currency = newAssetCurrencySelect.value;
             const group = newAssetGroupSelect.value || 'Other';
+            const equityPercentage = parseFloat(newAssetEquityPercentageInput.value);
+
 
             if (!name || isNaN(value) || value <= 0) {
                 addAssetError.textContent = "Please enter a valid asset name and a positive numeric value.";
                 addAssetError.classList.remove('hidden');
                 return;
             }
+            if (isNaN(equityPercentage) || equityPercentage < 0 || equityPercentage > 100) {
+                addAssetError.textContent = "Equity % must be a number between 0 and 100.";
+                addAssetError.classList.remove('hidden');
+                return;
+            }
+
 
             try {
                 const assetsCollectionRef = collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`);
@@ -1461,6 +1631,7 @@
                     value: value,
                     currency: currency,
                     group: group,
+                    equityPercentage: equityPercentage, // Save equity percentage
                     createdAt: Date.now(),
                     updatedAt: Date.now()
                 });
@@ -1555,9 +1726,15 @@
             }
             const name = editAssetNameInput.value.trim();
             const group = editAssetGroupSelect.value || 'Other';
+            const equityPercentage = parseFloat(editAssetEquityPercentageInput.value);
 
             if (!name) {
                 editAssetError.textContent = "Asset name cannot be empty.";
+                editAssetError.classList.remove('hidden');
+                return;
+            }
+            if (isNaN(equityPercentage) || equityPercentage < 0 || equityPercentage > 100) {
+                editAssetError.textContent = "Equity % must be a number between 0 and 100.";
                 editAssetError.classList.remove('hidden');
                 return;
             }
@@ -1567,6 +1744,7 @@
                 await updateDoc(assetDocRef, {
                     name: name,
                     group: group,
+                    equityPercentage: equityPercentage, // Update equity percentage
                     updatedAt: Date.now()
                 });
                 closeEditAssetModal();
@@ -1626,14 +1804,14 @@
             }
         }
 
-        // CSV Export Function
+        // CSV Export Function for Assets
         function exportAssetsToCSV() {
             if (assetsData.length === 0) {
                 alert("No assets to export."); // Using alert for simplicity, replace with custom modal if needed.
                 return;
             }
 
-            const headers = ["Asset Name", "Group", "Value", "Currency", "Value (Primary Currency)", "Last Updated"];
+            const headers = ["Asset Name", "Group", "Value", "Currency", "Value (Primary Currency)", "Equity %", "Last Updated"];
             const rows = assetsData.map(asset => {
                 const valueInPrimary = convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
                 return [
@@ -1642,6 +1820,7 @@
                     asset.value.toFixed(2),
                     asset.currency,
                     valueInPrimary.toFixed(2),
+                    asset.equityPercentage !== undefined ? asset.equityPercentage : '', // Export equity percentage
                     new Date(asset.updatedAt).toLocaleString()
                 ];
             });
@@ -1667,7 +1846,149 @@
             }
         }
 
-        // Account Group Management Handlers
+        // CSV Export Function for Net Worth History
+        function exportHistoryToCSV() {
+            if (netWorthSnapshotsData.length === 0) {
+                alert("No net worth history to export.");
+                return;
+            }
+
+            const headers = ["Date", "Total Net Worth", "Currency"];
+            const rows = netWorthSnapshotsData.map(snapshot => {
+                // Format date consistently for CSV (YYYY-MM-DD HH:MM:SS)
+                const date = new Date(snapshot.timestamp);
+                const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+                return [
+                    `"${formattedDate}"`, // Enclose date in quotes to handle spaces
+                    snapshot.totalNetWorth.toFixed(2),
+                    snapshot.currency
+                ];
+            });
+
+            const csvContent = [
+                headers.join(","),
+                ...rows.map(row => row.join(","))
+            ].join("\n");
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `net_worth_history_${new Date().toISOString().slice(0,10)}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert("Your browser does not support downloading files directly. Please copy the content below:\n\n" + csvContent);
+            }
+        }
+
+        // CSV Upload Function for Net Worth History
+        async function uploadHistoryFromCSV() {
+            if (!currentUser || !db) {
+                historyCsvMessage.textContent = "User not authenticated or database not ready.";
+                historyCsvMessage.classList.remove('hidden');
+                return;
+            }
+
+            const file = csvUploadInput.files[0];
+            if (!file) {
+                historyCsvMessage.textContent = "Please select a CSV file to upload.";
+                historyCsvMessage.classList.remove('hidden');
+                historyCsvMessage.classList.add('text-red-500');
+                return;
+            }
+
+            historyCsvMessage.classList.add('hidden'); // Hide previous errors
+            historyCsvMessage.textContent = "Uploading and processing...";
+            historyCsvMessage.classList.remove('hidden', 'text-red-500', 'text-green-500');
+            historyCsvMessage.classList.add('text-blue-500'); // Indicate processing
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const text = e.target.result;
+                const lines = text.split('\n').filter(line => line.trim() !== '');
+                if (lines.length <= 1) { // Headers + at least one data row
+                    historyCsvMessage.textContent = "CSV file is empty or contains only headers.";
+                    historyCsvMessage.classList.remove('text-blue-500');
+                    historyCsvMessage.classList.add('text-red-500');
+                    return;
+                }
+
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                const expectedHeaders = ["Date", "Total Net Worth", "Currency"];
+                // Check if headers match exactly
+                if (headers.length !== expectedHeaders.length || !expectedHeaders.every((val, index) => val === headers[index])) {
+                    historyCsvMessage.textContent = "CSV headers do not match expected format: 'Date,Total Net Worth,Currency'. Please ensure exact matching, including order.";
+                    historyCsvMessage.classList.remove('text-blue-500');
+                    historyCsvMessage.classList.add('text-red-500');
+                    return;
+                }
+
+                const dataRows = lines.slice(1);
+                let successfulUploads = 0;
+                let failedRows = [];
+
+                for (let i = 0; i < dataRows.length; i++) {
+                    const row = dataRows[i];
+                    const columns = row.split(',').map(c => c.trim().replace(/"/g, ''));
+
+                    if (columns.length !== expectedHeaders.length) {
+                        failedRows.push(`Row ${i + 2}: Incorrect number of columns.`);
+                        continue;
+                    }
+
+                    const dateString = columns[0]; // Date is at index 0
+                    const totalNetWorthStr = columns[1]; // Total Net Worth is at index 1
+                    const currency = columns[2]; // Currency is at index 2
+
+                    const timestamp = new Date(dateString).getTime();
+                    const totalNetWorth = parseFloat(totalNetWorthStr);
+
+                    if (isNaN(timestamp) || isNaN(totalNetWorth) || totalNetWorth < 0 || !['INR', 'USD', 'EUR'].includes(currency)) {
+                        failedRows.push(`Row ${i + 2}: Invalid data (Date, Net Worth, or Currency format).`);
+                        continue;
+                    }
+
+                    try {
+                        const snapshotsCollectionRef = collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/netWorthSnapshots`);
+                        await addDoc(snapshotsCollectionRef, {
+                            totalNetWorth: totalNetWorth,
+                            currency: currency,
+                            timestamp: timestamp
+                        });
+                        successfulUploads++;
+                    } catch (err) {
+                        console.error("Error adding historical snapshot from CSV:", err);
+                        failedRows.push(`Row ${i + 2}: Database error - ${err.message}`);
+                    }
+                }
+
+                if (successfulUploads > 0) {
+                    historyCsvMessage.textContent = `Successfully imported ${successfulUploads} historical snapshots.`;
+                    historyCsvMessage.classList.remove('text-red-500', 'text-blue-500');
+                    historyCsvMessage.classList.add('text-green-500');
+                } else {
+                    historyCsvMessage.textContent = "No valid historical snapshots were imported.";
+                    historyCsvMessage.classList.remove('text-blue-500');
+                    historyCsvMessage.classList.add('text-red-500');
+                }
+                if (failedRows.length > 0) {
+                    historyCsvMessage.textContent += ` (Errors in ${failedRows.length} rows: ${failedRows.join('; ')})`;
+                }
+                csvUploadInput.value = ''; // Clear file input
+            };
+            reader.onerror = () => {
+                historyCsvMessage.textContent = "Failed to read file.";
+                historyCsvMessage.classList.remove('text-blue-500');
+                historyCsvMessage.classList.add('text-red-500');
+            };
+            reader.readAsText(file);
+        }
+
+        // New: Account Group Management Handlers
         async function handleAddGroup() {
             if (!currentUser || !db) {
                 accountGroupError.textContent = "User not authenticated or database not ready.";
@@ -1766,38 +2087,6 @@
             }
         }
 
-        // New: Handle saving currency rates
-        async function handleSaveCurrencyRates() {
-            if (!currentUser || !db) {
-                currencyRateError.textContent = "User not authenticated or database not ready.";
-                currencyRateError.classList.remove('hidden');
-                return;
-            }
-
-            const usdRate = parseFloat(usdToInrRateInput.value);
-            const eurRate = parseFloat(eurToInrRateInput.value);
-
-            if (isNaN(usdRate) || usdRate <= 0 || isNaN(eurRate) || eurRate <= 0) {
-                currencyRateError.textContent = "Please enter valid positive numbers for both rates.";
-                currencyRateError.classList.remove('hidden');
-                return;
-            }
-
-            try {
-                const ratesDocRef = doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/exchangeRates`, 'user_rates');
-                await setDoc(ratesDocRef, {
-                    USD_INR: usdRate,
-                    EUR_INR: eurRate,
-                    updatedAt: Date.now()
-                });
-                currencyRateError.classList.add('hidden');
-                // Rates will be updated via onSnapshot, which will trigger re-renders
-            } catch (err) {
-                console.error("Error saving currency rates:", err);
-                currencyRateError.textContent = "Failed to save rates: " + err.message;
-                currencyRateError.classList.remove('hidden');
-            }
-        }
 
         // --- Event Listeners Setup ---
         document.addEventListener('DOMContentLoaded', initializeFirebase);
@@ -1820,6 +2109,7 @@
             renderAssetsTable(); // Re-render to update converted values
             renderNetWorthChart();
             renderAllocationChart();
+            renderEquityDebtAllocationChart(); // Re-render equity/debt chart
         });
 
         takeSnapshotBtn.addEventListener('click', handleTakeSnapshot);
@@ -1849,13 +2139,20 @@
         saveEditedAssetBtn.addEventListener('click', handleEditAssetSubmit);
         cancelEditAssetBtn.addEventListener('click', closeEditAssetModal);
 
-        // Account Group Management Listeners
+        // New: Account Group Management Listeners
         addGroupBtn.addEventListener('click', handleAddGroup);
         saveEditedGroupBtn.addEventListener('click', handleEditGroupSubmit);
         cancelEditGroupBtn.addEventListener('click', closeEditGroupModal);
 
-        // New: Currency Rate Management Listeners
-        saveCurrencyRatesBtn.addEventListener('click', handleSaveCurrencyRates);
+        // CSV History Import/Export Listeners
+        uploadHistoryCsvBtn.addEventListener('click', uploadHistoryFromCSV);
+        exportHistoryCsvBtn.addEventListener('click', exportHistoryToCSV);
+
+        // Chart Aggregation Listener
+        chartAggregationSelect.addEventListener('change', (e) => {
+            currentChartAggregation = e.target.value;
+            renderNetWorthChart(); // Re-render chart with new aggregation
+        });
 
     </script>
 </body>
