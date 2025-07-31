@@ -175,51 +175,54 @@
                     </div>
                 </div>
 
-                <!-- Net Worth Historical Graph -->
-                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                        <!-- BarChart Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
-                        Net Worth History
-                    </h2>
-                    <div class="flex justify-end mb-4">
-                        <label for="chart-aggregation-select" class="mr-2 text-gray-700">View by:</label>
-                        <select id="chart-aggregation-select" class="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                            <option value="daily">Day</option>
-                            <option value="monthly">Month</option>
-                            <option value="quarterly">Quarter</option>
-                            <option value="yearly">Year</option>
-                        </select>
+                <!-- Charts Section - Optimized Layout -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Net Worth Historical Graph -->
+                    <div class="md:col-span-2 p-6 bg-gray-50 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <!-- BarChart Icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                            Net Worth History
+                        </h2>
+                        <div class="flex justify-end mb-4">
+                            <label for="chart-aggregation-select" class="mr-2 text-gray-700">View by:</label>
+                            <select id="chart-aggregation-select" class="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                <option value="daily">Day</option>
+                                <option value="monthly">Month</option>
+                                <option value="quarterly">Quarter</option>
+                                <option value="yearly">Year</option>
+                            </select>
+                        </div>
+                        <p id="no-history-message" class="text-gray-500 text-center py-8 hidden">Take a few snapshots to see your net worth history here.</p>
+                        <div id="net-worth-chart-container" class="relative w-full h-80 hidden">
+                            <canvas id="netWorthChart"></canvas>
+                        </div>
                     </div>
-                    <p id="no-history-message" class="text-gray-500 text-center py-8 hidden">Take a few snapshots to see your net worth history here.</p>
-                    <div id="net-worth-chart-container" class="relative w-full h-80 hidden">
-                        <canvas id="netWorthChart"></canvas>
-                    </div>
-                </div>
 
-                <!-- Asset Distribution Pie Chart -->
-                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                        <!-- LayoutGrid Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                        Asset Distribution by Group
-                    </h2>
-                    <p id="no-allocation-message" class="text-gray-500 text-center py-8 hidden">Add assets to see your allocation breakdown.</p>
-                    <div id="allocation-chart-container" class="relative w-full h-80 hidden">
-                        <canvas id="assetAllocationChart"></canvas>
+                    <!-- Asset Distribution Pie Chart -->
+                    <div class="p-6 bg-gray-50 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <!-- LayoutGrid Icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            Asset Distribution by Group
+                        </h2>
+                        <p id="no-allocation-message" class="text-gray-500 text-center py-8 hidden">Add assets to see your allocation breakdown.</p>
+                        <div id="allocation-chart-container" class="relative w-full h-80 hidden">
+                            <canvas id="assetAllocationChart"></canvas>
+                        </div>
                     </div>
-                </div>
 
-                <!-- New: Equity vs. Non-Equity Allocation Pie Chart -->
-                <div class="mb-8 p-6 bg-gray-50 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                        <!-- Pie Chart Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><path d="M10 3.129a10 10 0 1 1-6.983 6.983"></path><path d="M10 3.129v6.871h10"></path></svg>
-                        Equity vs. Non-Equity Allocation
-                    </h2>
-                    <p id="no-equity-allocation-message" class="text-gray-500 text-center py-8 hidden">Enter "Equity %" for your assets to see this allocation.</p>
-                    <div id="equity-allocation-chart-container" class="relative w-full h-80 hidden">
-                        <canvas id="equityAllocationChart"></canvas>
+                    <!-- New: Equity vs. Non-Equity Allocation Pie Chart -->
+                    <div class="p-6 bg-gray-50 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <!-- Pie Chart Icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><path d="M10 3.129a10 10 0 1 1-6.983 6.983"></path><path d="M10 3.129v6.871h10"></path></svg>
+                            Equity vs. Non-Equity Allocation
+                        </h2>
+                        <p id="no-equity-allocation-message" class="text-gray-500 text-center py-8 hidden">Enter "Equity %" for your assets to see this allocation.</p>
+                        <div id="equity-allocation-chart-container" class="relative w-full h-80 hidden">
+                            <canvas id="equityAllocationChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -809,9 +812,9 @@
             if (toCurrency === 'INR') {
                 return valueInINR;
             } else if (toCurrency === 'USD') {
-                return valueInINR * EXCHANGE_RATES.INR_TO_USD;
+                return valueInINR * EXCHANGE_R.INR_TO_USD;
             } else if (toCurrency === 'EUR') {
-                return valueInINR * EXCHANGE_RATES.INR_TO_EUR;
+                return valueInINR * EXCHANGE_R.INR_TO_EUR;
             }
             return value;
         }
@@ -1039,7 +1042,8 @@
 
 
                     const row = assetsTableBody.insertRow();
-                    row.className = 'hover:bg-gray-50';
+                    // Apply alternating row colors
+                    row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
                     row.innerHTML = `
                         <td class="py-3 px-4 whitespace-nowrap text-gray-900">${asset.name}</td>
                         <td class="py-3 px-4 whitespace-nowrap text-gray-700">${asset.group}</td>
@@ -1098,9 +1102,10 @@
             } else {
                 noTransactionsMessage.classList.add('hidden');
                 transactionsTableContainer.classList.remove('hidden');
-                transactionsData.forEach(tx => {
+                transactionsData.forEach((tx, index) => {
                     const row = transactionsTableBody.insertRow();
-                    row.className = 'hover:bg-gray-50';
+                    // Apply alternating row colors
+                    row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
                     const assetCurrency = assetsData.find(a => a.id === tx.assetId)?.currency || primaryDisplayCurrency;
                     const amountChangedClass = tx.amountChanged >= 0 ? 'text-green-600' : 'text-red-600';
                     const typeText = tx.type === 'add' ? 'Add' : tx.type === 'subtract' ? 'Subtract' : 'Update';
@@ -1407,9 +1412,10 @@
             } else {
                 noGroupsMessage.classList.add('hidden');
                 accountGroupsTable.classList.remove('hidden');
-                customAccountGroupsData.forEach(group => {
+                customAccountGroupsData.forEach((group, index) => {
                     const row = accountGroupsTableBody.insertRow();
-                    row.className = 'hover:bg-gray-50';
+                    // Apply alternating row colors
+                    row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
                     row.innerHTML = `
                         <td class="py-2 px-4 text-gray-900">${group.name}</td>
                         <td class="py-2 px-4">
