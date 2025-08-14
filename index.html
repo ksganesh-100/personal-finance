@@ -8,6 +8,7 @@
   <link rel="canonical" href="https://coralmoney.in/" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="/favicon.ico" />
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-gray-50">
   <header class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -44,82 +45,94 @@
 
     <!-- Row 1: Core Functional Features -->
     <div class="mt-8 grid md:grid-cols-2 gap-8">
+
       <!-- Custom Asset Categories -->
       <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <h3 class="font-semibold text-lg">Create Custom Asset Categories</h3>
-        <p class="mt-2 text-gray-700">
-          Organize your accounts exactly how you think about your wealth — banks, mutual funds, PF, real estate, crypto, gold, or anything else.
-          Rearrange them anytime without breaking a single formula.
-        </p>
-        <div class="mt-4">
-          <img src="/assets/feature-asset-tracking.png" alt="Custom asset categories in CoralMoney" class="rounded-lg shadow" />
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="layers" class="w-6 h-6 text-teal-600"></i>
+          <h3 class="font-semibold text-lg">Create Custom Asset Categories</h3>
         </div>
+        <p class="text-gray-700">
+          Organize your accounts exactly how you think about your wealth — banks, mutual funds, PF, real estate, crypto, gold, or anything else. Rearrange them anytime without breaking a single formula.
+        </p>
       </div>
 
       <!-- Currency Conversion -->
       <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <h3 class="font-semibold text-lg">Multi-Currency Support</h3>
-        <p class="mt-2 text-gray-700">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="globe" class="w-6 h-6 text-teal-600"></i>
+          <h3 class="font-semibold text-lg">Multi-Currency Support</h3>
+        </div>
+        <p class="text-gray-700">
           Hold assets in INR, USD, EUR, or other major currencies — CoralMoney automatically converts them so your total net worth is always accurate.
         </p>
-        <div class="mt-4">
-          <img src="/assets/feature-currency.png" alt="Multi-currency conversion in CoralMoney" class="rounded-lg shadow" />
-        </div>
       </div>
 
       <!-- Data Export -->
       <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <h3 class="font-semibold text-lg">Your Data is Yours</h3>
-        <p class="mt-2 text-gray-700">
-          Export all your accounts, balances, and history to CSV anytime — no lock-in, no hidden formats.
-          Keep a personal backup, run your own analysis, or move to another tool whenever you like.
-        </p>
-        <div class="mt-4">
-          <img src="/assets/feature-export.png" alt="Export data from CoralMoney" class="rounded-lg shadow" />
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="download" class="w-6 h-6 text-teal-600"></i>
+          <h3 class="font-semibold text-lg">Your Data is Yours</h3>
         </div>
+        <p class="text-gray-700">
+          Export all your accounts, balances, and history to CSV anytime — no lock-in, no hidden formats. Keep a personal backup, run your own analysis, or move to another tool whenever you like.
+        </p>
       </div>
 
       <!-- Net Worth Import -->
       <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <h3 class="font-semibold text-lg">Bring Your History In</h3>
-        <p class="mt-2 text-gray-700">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="upload" class="w-6 h-6 text-teal-600"></i>
+          <h3 class="font-semibold text-lg">Bring Your History In</h3>
+        </div>
+        <p class="text-gray-700">
           Already tracking in a spreadsheet or another app? Import your past net worth values in minutes without recreating individual accounts — perfect for picking up where you left off.
         </p>
-        <div class="mt-4">
-          <img src="/assets/feature-import.png" alt="Import past net worth history in CoralMoney" class="rounded-lg shadow" />
-        </div>
       </div>
     </div>
 
     <!-- Row 2: Positioning & Trust Features -->
     <div class="mt-12 grid md:grid-cols-3 gap-8">
+
       <!-- Manual-Only Privacy -->
       <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <h3 class="font-semibold text-lg">Manual-Only Privacy</h3>
-        <p class="mt-2 text-gray-700">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="shield" class="w-6 h-6 text-teal-600"></i>
+          <h3 class="font-semibold text-lg">Manual-Only Privacy</h3>
+        </div>
+        <p class="text-gray-700">
           No bank connections, no scraping. You decide what to enter and when — keeping your financial details secure and under your control.
         </p>
       </div>
 
       <!-- Free to Start -->
       <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <h3 class="font-semibold text-lg">Free to Start</h3>
-        <p class="mt-2 text-gray-700">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="smile" class="w-6 h-6 text-teal-600"></i>
+          <h3 class="font-semibold text-lg">Free to Start</h3>
+        </div>
+        <p class="text-gray-700">
           Get started in minutes without paying a rupee. If we add premium features later, you’ll always be able to export your data anytime.
         </p>
       </div>
 
       <!-- India-Focused Finance -->
       <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <h3 class="font-semibold text-lg">Built for Indian Finance</h3>
-        <p class="mt-2 text-gray-700">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="landmark" class="w-6 h-6 text-teal-600"></i>
+          <h3 class="font-semibold text-lg">Built for Indian Finance</h3>
+        </div>
+        <p class="text-gray-700">
           Track local asset types like EPF, PPF, FDs, mutual funds, UPI balances, and gold alongside global investments in one place.
         </p>
       </div>
     </div>
-
   </div>
 </section>
+
+<script>
+  lucide.createIcons();
+</script>
 
     <section id="privacy" class="max-w-6xl mx-auto px-4 py-14">
       <h2 class="text-3xl font-bold">Privacy by design</h2>
