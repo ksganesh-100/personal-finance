@@ -9,7 +9,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="/favicon.ico" />
   <script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- Open Graph / Facebook -->
+<meta property="og:title" content="CoralMoney – Track Your Net Worth Privately" />
+<meta property="og:description" content="A manual-first, privacy-focused net worth tracker built for Indian finance. Free to start, no bank connections." />
+<meta property="og:image" content="https://coralmoney.in/assets/hero-screenshot.png" />
+<meta property="og:url" content="https://coralmoney.in" />
+<meta property="og:type" content="website" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="CoralMoney – Track Your Net Worth Privately" />
+<meta name="twitter:description" content="A manual-first, privacy-focused net worth tracker built for Indian finance. Free to start, no bank connections." />
+<meta name="twitter:image" content="https://coralmoney.in/assets/hero-screenshot.png" />
+
 </head>
+
 <body class="bg-gray-50">
   <header class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
     <a href="/" class="font-bold text-xl">CoralMoney</a>
@@ -72,95 +87,93 @@
   lucide.createIcons();
 </script>
 
-
-    <section id="features" class="bg-white border-t border-gray-100">
-  <div class="max-w-6xl mx-auto px-4 py-14">
-    <h2 class="text-3xl font-bold">Everything you need for effortless net worth tracking</h2>
-    <p class="mt-3 text-gray-700">Powerful tools, local finance awareness, and complete control over your data — all in one simple, fast app.</p>
-
-    <!-- Row 1: Core Functional Features -->
-    <div class="mt-8 grid md:grid-cols-2 gap-8">
-
-      <!-- Custom Asset Categories -->
-      <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <div class="flex items-center gap-3 mb-3">
-          <i data-lucide="layers" class="w-6 h-6 text-teal-600"></i>
-          <h3 class="font-semibold text-lg">Create Custom Asset Categories</h3>
+<!-- Features Section -->
+<section id="features" class="bg-gray-50 py-16">
+  <div class="max-w-6xl mx-auto px-4">
+    <h2 class="text-3xl font-bold text-center mb-12">Features</h2>
+    <div class="grid md:grid-cols-3 gap-10">
+      
+      <!-- Feature 1 -->
+      <div class="flex items-start gap-4">
+        <i data-lucide="line-chart" class="w-8 h-8 text-teal-600 flex-shrink-0"></i>
+        <div>
+          <h3 class="text-lg font-semibold">Track all your assets over time</h3>
+          <p class="text-gray-600">See how your wealth changes month by month with easy updates.</p>
         </div>
-        <p class="text-gray-700">
-          Organize your accounts exactly how you think about your wealth — banks, mutual funds, PF, real estate, crypto, gold, or anything else. Rearrange them anytime without breaking a single formula.
-        </p>
       </div>
 
-      <!-- Currency Conversion -->
-      <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <div class="flex items-center gap-3 mb-3">
-          <i data-lucide="globe" class="w-6 h-6 text-teal-600"></i>
-          <h3 class="font-semibold text-lg">Multi-Currency Support</h3>
+      <!-- Feature 2 -->
+      <div class="flex items-start gap-4">
+        <i data-lucide="folder-cog" class="w-8 h-8 text-teal-600 flex-shrink-0"></i>
+        <div>
+          <h3 class="text-lg font-semibold">Create custom asset categories</h3>
+          <p class="text-gray-600">Organise accounts your way — from EPF to crypto to real estate.</p>
         </div>
-        <p class="text-gray-700">
-          Hold assets in INR, USD, EUR, or other major currencies — CoralMoney automatically converts them so your total net worth is always accurate.
-        </p>
       </div>
 
-      <!-- Data Export -->
-      <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <div class="flex items-center gap-3 mb-3">
-          <i data-lucide="download" class="w-6 h-6 text-teal-600"></i>
-          <h3 class="font-semibold text-lg">Your Data is Yours</h3>
+      <!-- Feature 3 -->
+      <div class="flex items-start gap-4">
+        <i data-lucide="globe" class="w-8 h-8 text-teal-600 flex-shrink-0"></i>
+        <div>
+          <h3 class="text-lg font-semibold">Support for major currency conversion</h3>
+          <p class="text-gray-600">Track INR alongside USD, EUR, and other currencies seamlessly.</p>
         </div>
-        <p class="text-gray-700">
-          Export all your accounts, balances, and history to CSV anytime — no lock-in, no hidden formats. Keep a personal backup, run your own analysis, or move to another tool whenever you like.
-        </p>
       </div>
 
-      <!-- Net Worth Import -->
-      <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <div class="flex items-center gap-3 mb-3">
-          <i data-lucide="upload" class="w-6 h-6 text-teal-600"></i>
-          <h3 class="font-semibold text-lg">Bring Your History In</h3>
+      <!-- Feature 4 -->
+      <div class="flex items-start gap-4">
+        <i data-lucide="pie-chart" class="w-8 h-8 text-teal-600 flex-shrink-0"></i>
+        <div>
+          <h3 class="text-lg font-semibold">Track asset allocation</h3>
+          <p class="text-gray-600">Visualise how your wealth is distributed across categories.</p>
         </div>
-        <p class="text-gray-700">
-          Already tracking in a spreadsheet or another app? Import your past net worth values in minutes without recreating individual accounts — perfect for picking up where you left off.
-        </p>
-      </div>
-    </div>
-
-    <!-- Row 2: Positioning & Trust Features -->
-    <div class="mt-12 grid md:grid-cols-3 gap-8">
-
-      <!-- Manual-Only Privacy -->
-      <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <div class="flex items-center gap-3 mb-3">
-          <i data-lucide="shield" class="w-6 h-6 text-teal-600"></i>
-          <h3 class="font-semibold text-lg">Manual-Only Privacy</h3>
-        </div>
-        <p class="text-gray-700">
-          No bank connections, no scraping. You decide what to enter and when — keeping your financial details secure and under your control.
-        </p>
       </div>
 
-      <!-- Free to Start -->
-      <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <div class="flex items-center gap-3 mb-3">
-          <i data-lucide="smile" class="w-6 h-6 text-teal-600"></i>
-          <h3 class="font-semibold text-lg">Free to Start</h3>
+      <!-- Feature 5 -->
+      <div class="flex items-start gap-4">
+        <i data-lucide="download" class="w-8 h-8 text-teal-600 flex-shrink-0"></i>
+        <div>
+          <h3 class="text-lg font-semibold">Your data is yours — export anytime</h3>
+          <p class="text-gray-600">Download your full history in CSV format whenever you like.</p>
         </div>
-        <p class="text-gray-700">
-          Get started in minutes without paying a rupee. If we add premium features later, you’ll always be able to export your data anytime.
-        </p>
       </div>
 
-      <!-- India-Focused Finance -->
-      <div class="p-6 rounded-lg border border-gray-200 bg-white">
-        <div class="flex items-center gap-3 mb-3">
-          <i data-lucide="landmark" class="w-6 h-6 text-teal-600"></i>
-          <h3 class="font-semibold text-lg">Built for Indian Finance</h3>
+      <!-- Feature 6 -->
+      <div class="flex items-start gap-4">
+        <i data-lucide="upload" class="w-8 h-8 text-teal-600 flex-shrink-0"></i>
+        <div>
+          <h3 class="text-lg font-semibold">Easy net worth import</h3>
+          <p class="text-gray-600">Bring in your past net worth history from spreadsheets or other tools.</p>
         </div>
-        <p class="text-gray-700">
-          Track local asset types like EPF, PPF, FDs, mutual funds, UPI balances, and gold alongside global investments in one place.
-        </p>
       </div>
+
+      <!-- Feature 7 -->
+      <div class="flex items-start gap-4">
+        <i data-lucide="shield" class="w-8 h-8 text-teal-600 flex-shrink-0"></i>
+        <div>
+          <h3 class="text-lg font-semibold">Manual-only privacy</h3>
+          <p class="text-gray-600">No bank connections, no transaction tracking — full control stays with you.</p>
+        </div>
+      </div>
+
+      <!-- Feature 8 -->
+      <div class="flex items-start gap-4">
+        <i data-lucide="smile" class="w-8 h-8 text-teal-600 flex-shrink-0"></i>
+        <div>
+          <h3 class="text-lg font-semibold">Free to start</h3>
+          <p class="text-gray-600">Get started in minutes without any payment or sign-up barrier.</p>
+        </div>
+      </div>
+
+      <!-- Feature 9 -->
+      <div class="flex items-start gap-4">
+        <i data-lucide="flag" class="w-8 h-8 text-teal-600 flex-shrink-0"></i>
+        <div>
+          <h3 class="text-lg font-semibold">India-specific finance context</h3>
+          <p class="text-gray-600">Supports EPF, PPF, gold, FDs, and other Indian investment types.</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -204,6 +217,16 @@
   </footer>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
 
+<section class="bg-teal-600 py-12">
+  <div class="max-w-3xl mx-auto px-4 text-center text-white">
+    <h2 class="text-3xl font-bold mb-4">Ready to track your net worth?</h2>
+    <p class="mb-6 text-lg">Try CoralMoney now — free, no sign-up required.</p>
+    <a href="/app/" class="px-6 py-3 bg-white text-teal-700 font-semibold rounded-md hover:bg-gray-100">
+      Open the App
+    </a>
+  </div>
+</section>
+  
 <footer class="max-w-6xl mx-auto px-4 py-10 text-sm text-gray-500">
   © <span id="y"></span> CoralMoney • 
   <a href="/privacy.html" class="underline hover:text-gray-700">Privacy Policy</a> • 
