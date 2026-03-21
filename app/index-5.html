@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net Worth Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+        .modal-overlay.active { opacity: 1; }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 0;
+        }
+        .modal-content.active { transform: translateY(0); opacity: 1; }
+        .hidden { display: none !important; }
+        .nav-link {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+        .nav-link.active {
+            background-color: #00C49F;
+            color: white;
+            font-weight: 600;
+        }
+        .nav-link:hover:not(.active) { background-color: #374151; }
+
+        /* Allocation input styles */
+        .alloc-input {
+            font-family: 'Inter', monospace;
+            font-size: 14px;
+            letter-spacing: 0.02em;
+        }
+        .alloc-bar {
+            display: flex;
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            gap: 1px;
+            margin: 6px 0 4px;
+        }
+        .alloc-bar-seg { height: 100%; transition: flex 0.2s; }
+        .alloc-bar-empty {
+            flex: 1;
+            background: #e5e7eb;
+            border: 1px dashed #d1d5db;
+            border-radius: 3px;
+        }
+        .alloc-tag {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 999px;
+            margin: 2px 2px 0 0;
+        }
+        .alloc-tag-eq   { background: #dbeafe; color: #1d4ed8; }
+        .alloc-tag-debt { background: #ede9fe; color: #6d28d9; }
+        .alloc-tag-gold { background: #fef3c7; color: #92400e; }
+        .alloc-tag-cash { background: #d1fae5; color: #065f46; }
+        .alloc-tag-skip { background: #f3f4f6; color: #6b7280; }
+        .alloc-tag-ok   { background: #d1fae5; color: #065f46; }
+        .alloc-tag-err  { background: #fee2e2; color: #991b1b; }
+
+        /* Mini bar in table */
+        .mini-alloc-bar {
+            display: flex;
+            height: 5px;
+            border-radius: 2px;
+            overflow: hidden;
+            gap: 1px;
+            width: 64px;
+        }
+        .mini-alloc-code {
+            font-size: 10px;
+            color: #9ca3af;
+            font-family: monospace;
+            margin-top: 2px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container mx-auto p-4 bg-white shadow-lg rounded-lg mt-8 mb-8">
+        <div id="loading-state" class="flex items-center justify-center min-h-screen hidden">
+            <div class="text-xl font-semibold text-gray-700">Loading Net Worth Tracker...</div>
+        </div>
+        <div id="error-state" class="flex items-center justify-center min-h-screen hidden">
+            <div class="text-xl font-semibold text-red-600 p-4 bg-red-100 rounded-lg">Error: <span id="error-message"></span></div>
+        </div>
+
+        <!-- Authentication View -->
+        <div id="auth-view" class="view-section hidden flex flex-col items-center justify-center min-h-[60vh]">
+            <h1 class="text-4xl font-bold text-gray-800 mb-8">Welcome to Net Worth Tracker</h1>
+            <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h2 id="auth-form-title" class="text-2xl font-semibold text-center text-gray-800 mb-6">Sign In</h2>
+                <p id="auth-error-message" class="text-red-500 text-center mb-4 hidden"></p>
+                <div class="mb-4">
+                    <label for="auth-email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                    <input type="email" id="auth-email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" placeholder="your@example.com"/>
+                </div>
+                <div class="mb-6">
+                    <label for="auth-password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
+                    <input type="password" id="auth-password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" placeholder="********"/>
+                </div>
+                <div class="flex flex-col space-y-4">
+                    <button id="sign-in-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Sign In</button>
+                    <button id="sign-up-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Sign Up</button>
+                    <button id="toggle-auth-mode-btn" class="text-blue-500 hover:text-blue-700 text-sm mt-4">Switch to Sign Up</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Application Content -->
+        <div id="main-content" class="hidden">
+            <header class="bg-gray-900 text-white p-4 rounded-t-lg flex flex-col md:flex-row items-center justify-between mb-6">
+                <div class="text-2xl font-bold text-teal-400 mb-4 md:mb-0">networth</div>
+                <nav class="flex space-x-4 items-center">
+                    <button id="nav-dashboard" class="nav-link active">Dashboard</button>
+                    <button id="nav-accounts" class="nav-link">Accounts</button>
+                    <button id="nav-settings" class="nav-link">Settings</button>
+                    <button id="sign-out-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200 ease-in-out transform hover:scale-105 ml-4">Sign Out</button>
+                </nav>
+            </header>
+
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view-section">
+                <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">Your Dashboard</h1>
+                <p class="text-center text-gray-600 mb-8">Welcome, User ID: <span id="user-id-display"></span>! Track your financial journey.</p>
+
+                <div class="bg-blue-600 text-white p-6 rounded-xl shadow-lg mb-8 flex flex-col md:flex-row items-center justify-between">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mr-4"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 2v20"></path></svg>
+                        <div>
+                            <h2 class="text-2xl font-semibold">Total Net Worth</h2>
+                            <p id="total-net-worth" class="text-4xl font-bold mt-2"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label for="currency-select" class="text-lg">Display in:</label>
+                        <select id="currency-select" class="p-2 rounded-md bg-blue-700 text-white border border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
+                            <option value="INR">INR</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                        </select>
+                        <button id="take-snapshot-btn" class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200 ease-in-out transform hover:scale-105">Take Snapshot</button>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="md:col-span-2 p-6 bg-gray-50 rounded-xl shadow-lg">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                            Net Worth History
+                        </h2>
+                        <div class="flex justify-end mb-4">
+                            <label for="chart-aggregation-select" class="mr-2 text-gray-700">View by:</label>
+                            <select id="chart-aggregation-select" class="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
+                                <option value="monthly">Month</option>
+                                <option value="quarterly">Quarter</option>
+                                <option value="yearly">Year</option>
+                            </select>
+                        </div>
+                        <p id="no-history-message" class="text-gray-500 text-center py-8 hidden">Take a few snapshots to see your net worth history here.</p>
+                        <div id="net-worth-chart-container" class="relative w-full h-80 hidden">
+                            <canvas id="netWorthChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-gray-50 rounded-xl shadow-lg">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            Asset Distribution by Group
+                        </h2>
+                        <p id="no-allocation-message" class="text-gray-500 text-center py-8 hidden">Add assets to see your allocation breakdown.</p>
+                        <div id="allocation-chart-container" class="relative w-full h-80 hidden">
+                            <canvas id="assetAllocationChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Asset Class Allocation Chart (replaces Equity vs Non-Equity) -->
+                    <div class="p-6 bg-gray-50 rounded-xl shadow-lg">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><path d="M10 3.129a10 10 0 1 1-6.983 6.983"></path><path d="M10 3.129v6.871h10"></path></svg>
+                            Asset Class Allocation
+                        </h2>
+                        <p id="no-asset-class-message" class="text-gray-500 text-center py-8 hidden">Set asset class allocation on your assets to see this chart.</p>
+                        <div id="asset-class-chart-container" class="relative w-full h-80 hidden">
+                            <canvas id="assetClassChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Log -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                        Transaction History
+                    </h2>
+                    <p id="no-transactions-message" class="text-gray-500 text-center py-8 hidden">No transactions recorded yet.</p>
+                    <div id="transactions-table-container" class="overflow-x-auto rounded-lg shadow-md hidden">
+                        <table class="min-w-full bg-white border-collapse">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Date</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Asset</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Amount Changed</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">New Value</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-table-body" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Net Worth Snapshots -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="10"></circle></svg>
+                        Net Worth Snapshots
+                    </h2>
+                    <p id="no-snapshots-message" class="text-gray-500 text-center py-8 hidden">No snapshots recorded yet.</p>
+                    <div id="snapshots-table-container" class="overflow-x-auto rounded-lg shadow-md hidden">
+                        <table class="min-w-full bg-white border-collapse">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Date</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Net Worth</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Currency</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="snapshots-table-body" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accounts View -->
+            <div id="accounts-view" class="view-section hidden">
+                <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">Your Accounts</h1>
+                <div class="flex justify-end mb-6">
+                    <button id="add-asset-btn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                        Add New Asset
+                    </button>
+                </div>
+                <div class="mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        All Assets
+                    </h2>
+                    <p id="no-assets-message" class="text-gray-500 text-center py-8 hidden">No assets added yet. Click "Add New Asset" to get started!</p>
+                    <div id="assets-table-container" class="overflow-x-auto rounded-lg shadow-md hidden">
+                        <table class="min-w-full bg-white border-collapse">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Asset Name</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Group</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value (<span id="display-currency-assets">INR</span>)</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Allocation</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Last Updated</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assets-table-body" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-end mt-4">
+                        <button id="export-csv-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center">Export to CSV</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settings-view" class="view-section hidden">
+                <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">Settings</h1>
+                <div class="mb-8 p-6 bg-gray-50 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Account Groups</h2>
+                    <p id="account-group-error" class="text-red-500 mb-4 hidden"></p>
+                    <div class="flex mb-4">
+                        <input type="text" id="new-group-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 mr-2" placeholder="New Group Name"/>
+                        <button id="add-group-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Add Group</button>
+                    </div>
+                    <div id="account-groups-list">
+                        <p id="no-groups-message" class="text-gray-500 text-center py-4 hidden">No custom groups added yet.</p>
+                        <table id="account-groups-table" class="min-w-full bg-white border-collapse hidden">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-700 uppercase">Group Name</th>
+                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-700 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="account-groups-table-body" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mb-8 p-6 bg-gray-50 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Currency Conversion Rates</h2>
+                    <p id="currency-rate-error" class="text-red-500 mb-4 hidden"></p>
+                    <div class="mb-4">
+                        <label for="usd-to-inr-rate" class="block text-gray-700 text-sm font-bold mb-2">1 USD = <span id="usd-currency-display">INR</span></label>
+                        <input type="number" id="usd-to-inr-rate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" min="0.01" step="0.01" placeholder="e.g., 83.50"/>
+                    </div>
+                    <div class="mb-6">
+                        <label for="eur-to-inr-rate" class="block text-gray-700 text-sm font-bold mb-2">1 EUR = <span id="eur-currency-display">INR</span></label>
+                        <input type="number" id="eur-to-inr-rate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" min="0.01" step="0.01" placeholder="e.g., 90.00"/>
+                    </div>
+                    <div>
+                        <button id="save-currency-rates-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Save Rates</button>
+                    </div>
+                </div>
+
+                <div class="mb-8 p-6 bg-gray-50 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Import/Export Net Worth History</h2>
+                    <p id="history-csv-message" class="text-red-500 mb-4 hidden"></p>
+                    <div class="mb-4">
+                        <label for="csv-upload-input" class="block text-gray-700 text-sm font-bold mb-2">Upload History (CSV):</label>
+                        <input type="file" id="csv-upload-input" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"/>
+                        <button id="upload-history-csv-btn" class="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Upload CSV</button>
+                    </div>
+                    <div>
+                        <button id="export-history-csv-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Export History to CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Asset Modal -->
+    <div id="add-asset-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold mb-4">Add New Asset</h3>
+            <p id="add-asset-error" class="text-red-500 mb-4 hidden"></p>
+            <div class="mb-4">
+                <label for="new-asset-name" class="block text-gray-700 text-sm font-bold mb-2">Asset Name:</label>
+                <input type="text" id="new-asset-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" placeholder="e.g., Savings Account, Google Stock"/>
+            </div>
+            <div class="mb-4">
+                <label for="new-asset-value" class="block text-gray-700 text-sm font-bold mb-2">Current Value:</label>
+                <input type="number" id="new-asset-value" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" min="0" step="0.01" placeholder="e.g., 10000.00"/>
+            </div>
+            <div class="mb-4">
+                <label for="new-asset-currency" class="block text-gray-700 text-sm font-bold mb-2">Currency:</label>
+                <select id="new-asset-currency" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
+                    <option value="INR">INR</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="new-asset-group" class="block text-gray-700 text-sm font-bold mb-2">Asset Group:</label>
+                <select id="new-asset-group" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
+                    <option value="">Select a group (Optional)</option>
+                </select>
+            </div>
+            <!-- Allocation smart input -->
+            <div class="mb-6">
+                <label for="new-asset-allocation" class="block text-gray-700 text-sm font-bold mb-1">Asset Class Allocation:</label>
+                <input type="text" id="new-asset-allocation" class="alloc-input shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" placeholder="e.g. 100E or 60E 40D or S"/>
+                <div class="alloc-bar" id="new-alloc-bar"><div class="alloc-bar-empty"></div></div>
+                <div id="new-alloc-tags" class="flex flex-wrap gap-1 min-h-5"></div>
+                <p class="text-xs text-gray-400 mt-1">E = Equity &nbsp;·&nbsp; D = Debt &nbsp;·&nbsp; C = Cash &nbsp;·&nbsp; G = Gold/Silver &nbsp;·&nbsp; S = Skip (exclude from chart)</p>
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="save-new-asset-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Add Asset</button>
+                <button id="cancel-add-asset-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adjust Value Modal -->
+    <div id="adjust-value-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold mb-4">Adjust Value for <span id="adjust-asset-name"></span> (<span id="adjust-asset-currency"></span>)</h3>
+            <p class="text-gray-600 mb-4">Current Value: <span id="adjust-current-value"></span></p>
+            <p id="adjust-value-error" class="text-red-500 mb-4 hidden"></p>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Update Type:</label>
+                <div class="flex space-x-4">
+                    <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="transactionType" value="add" checked/><span class="ml-2">Add</span></label>
+                    <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="transactionType" value="subtract"/><span class="ml-2">Subtract</span></label>
+                    <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="transactionType" value="absolute"/><span class="ml-2">Set Absolute Value</span></label>
+                </div>
+            </div>
+            <div id="transaction-amount-section" class="mb-4">
+                <label for="transaction-amount" class="block text-gray-700 text-sm font-bold mb-2">Amount:</label>
+                <input type="number" id="transaction-amount" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" min="0" step="0.01" placeholder="e.g., 500.00"/>
+            </div>
+            <div id="transaction-absolute-value-section" class="mb-4 hidden">
+                <label for="transaction-absolute-value" class="block text-gray-700 text-sm font-bold mb-2">New Absolute Value:</label>
+                <input type="number" id="transaction-absolute-value" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" min="0" step="0.01" placeholder="e.g., 10500.00"/>
+            </div>
+            <div class="mb-6">
+                <label for="transaction-description" class="block text-gray-700 text-sm font-bold mb-2">Description (Optional):</label>
+                <input type="text" id="transaction-description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" placeholder="e.g., Monthly deposit, Stock sale"/>
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="apply-transaction-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Apply Change</button>
+                <button id="cancel-transaction-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Asset Modal -->
+    <div id="edit-asset-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold mb-4">Edit Asset</h3>
+            <p id="edit-asset-error" class="text-red-500 mb-4 hidden"></p>
+            <div class="mb-4">
+                <label for="edit-asset-name" class="block text-gray-700 text-sm font-bold mb-2">Asset Name:</label>
+                <input type="text" id="edit-asset-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" placeholder="e.g., Savings Account"/>
+            </div>
+            <div class="mb-4">
+                <label for="edit-asset-group" class="block text-gray-700 text-sm font-bold mb-2">Asset Group:</label>
+                <select id="edit-asset-group" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
+                    <option value="">Select a group (Optional)</option>
+                </select>
+            </div>
+            <!-- Allocation smart input -->
+            <div class="mb-6">
+                <label for="edit-asset-allocation" class="block text-gray-700 text-sm font-bold mb-1">Asset Class Allocation:</label>
+                <input type="text" id="edit-asset-allocation" class="alloc-input shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" placeholder="e.g. 100E or 60E 40D or S"/>
+                <div class="alloc-bar" id="edit-alloc-bar"><div class="alloc-bar-empty"></div></div>
+                <div id="edit-alloc-tags" class="flex flex-wrap gap-1 min-h-5"></div>
+                <p class="text-xs text-gray-400 mt-1">E = Equity &nbsp;·&nbsp; D = Debt &nbsp;·&nbsp; C = Cash &nbsp;·&nbsp; G = Gold/Silver &nbsp;·&nbsp; S = Skip (exclude from chart)</p>
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="save-edited-asset-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Save Changes</button>
+                <button id="cancel-edit-asset-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Account Group Modal -->
+    <div id="edit-group-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold mb-4">Edit Account Group</h3>
+            <p id="edit-group-error" class="text-red-500 mb-4 hidden"></p>
+            <div class="mb-4">
+                <label for="edit-group-name" class="block text-gray-700 text-sm font-bold mb-2">Group Name:</label>
+                <input type="text" id="edit-group-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" placeholder="e.g., New Group Name"/>
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="save-edited-group-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Save Changes</button>
+                <button id="cancel-edit-group-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="confirm-delete-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width:360px;">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="flex-shrink-0 w-9 h-9 rounded-full bg-red-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800" id="confirm-delete-title">Delete item?</h3>
+            </div>
+            <p class="text-sm text-gray-600 mb-6" id="confirm-delete-message">This action cannot be undone.</p>
+            <div class="flex items-center justify-end gap-3">
+                <button id="confirm-delete-cancel-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded focus:outline-none transition duration-200">Cancel</button>
+                <button id="confirm-delete-ok-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded focus:outline-none transition duration-200">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAG5hRXMoRCAJtE_SK_9vAHKzTfPDzWips",
+            authDomain: "personal-finance-b265a.firebaseapp.com",
+            projectId: "personal-finance-b265a",
+            storageBucket: "personal-finance-b265a.firebasestorage.app",
+            messagingSenderId: "704749934703",
+            appId: "1:704749934703:web:2b5d572df1e2819cf1d59a",
+            measurementId: "G-DXTCNEJ57E"
+        };
+
+        // ─── Allocation constants ────────────────────────────────────────────────
+        const ALLOC_KEYS   = ['equity', 'cash', 'debt', 'gold'];
+        const ALLOC_TOKENS = { e: 'equity', d: 'debt', g: 'gold', c: 'cash', s: 'skip' };
+        const ALLOC_LABELS = { equity: 'Equity', debt: 'Debt', gold: 'Gold / Silver', cash: 'Cash' };
+        const ALLOC_COLORS = { equity: '#378ADD', debt: '#7F77DD', gold: '#EF9F27', cash: '#1D9E75' };
+        const ALLOC_SHORT  = { equity: 'E', debt: 'D', gold: 'G', cash: 'C' };
+
+        /**
+         * Parse a smart allocation string like "60E 40D" or "100G" or "S".
+         * Returns { skip, parts:[{key,pct}], error, total }
+         */
+        function parseAllocation(raw) {
+            if (!raw || !raw.trim()) return { skip: false, parts: [], error: null, total: 0 };
+            const str = raw.trim().toLowerCase();
+            if (str === 's' || str === 'skip') return { skip: true, parts: [], error: null, total: 100 };
+
+            const tokens = str.match(/\d+\s*[edgcs]/g) || [];
+            const parts = [];
+            let total = 0;
+            const seen = new Set();
+
+            for (const t of tokens) {
+                const num = parseInt(t);
+                const letter = t.replace(/[\d\s]/g, '');
+                if (letter === 's') return { skip: true, parts: [], error: null, total: 100 };
+                const key = ALLOC_TOKENS[letter];
+                if (!key || num <= 0) continue;
+                if (seen.has(key)) continue; // deduplicate
+                seen.add(key);
+                parts.push({ key, pct: num });
+                total += num;
+            }
+
+            if (parts.length === 0) {
+                return { skip: false, parts: [], error: 'Unrecognised — use e.g. 60E 40D or 100G or S', total: 0 };
+            }
+            const error = total !== 100 ? `${total}% total — must equal 100` : null;
+            return { skip: false, parts, error, total };
+        }
+
+        /**
+         * Convert a parsed allocation result back to the object stored in Firestore:
+         * { equity:60, debt:40 } or { skip:true }
+         */
+        function allocResultToObject(result) {
+            if (result.skip) return { skip: true };
+            const obj = {};
+            for (const { key, pct } of result.parts) obj[key] = pct;
+            return obj;
+        }
+
+        /**
+         * Convert a stored allocation object back to the short display string e.g. "60E 40D"
+         */
+        function allocObjectToString(alloc) {
+            if (!alloc) return '';
+            if (alloc.skip) return 'S';
+            return ALLOC_KEYS
+                .filter(k => alloc[k] > 0)
+                .map(k => `${alloc[k]}${ALLOC_SHORT[k]}`)
+                .join(' ');
+        }
+
+        /**
+         * Migrate old equityPercentage field to new allocation object.
+         * Called on each asset during data load if allocation is missing.
+         */
+        function migrateAllocation(asset) {
+            if (asset.allocation) return asset.allocation;
+            if (typeof asset.equityPercentage === 'number') {
+                const eq = Math.round(asset.equityPercentage);
+                const debt = 100 - eq;
+                if (eq === 0) return { debt: 100 };
+                if (debt === 0) return { equity: 100 };
+                return { equity: eq, debt };
+            }
+            return null; // unset
+        }
+
+        /**
+         * Render the live bar + tags feedback inside a modal.
+         * barEl = the .alloc-bar div, tagsEl = the tags container div
+         */
+        function renderAllocFeedback(raw, barEl, tagsEl) {
+            const { skip, parts, error } = parseAllocation(raw);
+            barEl.innerHTML = '';
+            tagsEl.innerHTML = '';
+
+            if (!raw || !raw.trim()) {
+                barEl.innerHTML = '<div class="alloc-bar-empty" style="flex:1"></div>';
+                return;
+            }
+            if (skip) {
+                barEl.innerHTML = '<div class="alloc-bar-empty" style="flex:1"></div>';
+                const t = document.createElement('span');
+                t.className = 'alloc-tag alloc-tag-skip';
+                t.textContent = 'Excluded from chart';
+                tagsEl.appendChild(t);
+                return;
+            }
+            if (error && parts.length === 0) {
+                barEl.innerHTML = '<div style="flex:1;background:#fee2e2;border-radius:3px;height:100%;"></div>';
+                const t = document.createElement('span');
+                t.className = 'alloc-tag alloc-tag-err';
+                t.textContent = error;
+                tagsEl.appendChild(t);
+                return;
+            }
+            // Draw bar segments
+            for (const p of parts) {
+                const s = document.createElement('div');
+                s.className = 'alloc-bar-seg';
+                s.style.flex = p.pct;
+                s.style.background = ALLOC_COLORS[p.key] || '#888';
+                barEl.appendChild(s);
+            }
+            // Draw tags
+            for (const p of parts) {
+                const clsMap = { equity: 'alloc-tag-eq', debt: 'alloc-tag-debt', gold: 'alloc-tag-gold', cash: 'alloc-tag-cash' };
+                const t = document.createElement('span');
+                t.className = 'alloc-tag ' + (clsMap[p.key] || '');
+                t.textContent = `${p.pct}% ${ALLOC_LABELS[p.key] || p.key}`;
+                tagsEl.appendChild(t);
+            }
+            if (error) {
+                const t = document.createElement('span');
+                t.className = 'alloc-tag alloc-tag-err';
+                t.textContent = error;
+                tagsEl.appendChild(t);
+            } else {
+                const t = document.createElement('span');
+                t.className = 'alloc-tag alloc-tag-ok';
+                t.textContent = '= 100%';
+                tagsEl.appendChild(t);
+            }
+        }
+
+        // ─── App state ────────────────────────────────────────────────────────────
+        let app, db, auth, currentUser = null;
+        let assetsData = [], transactionsData = [], netWorthSnapshotsData = [], customAccountGroupsData = [];
+        let primaryDisplayCurrency = 'INR';
+        let selectedAssetForAdjustment = null;
+        let currentEditAssetId = null, currentEditGroupId = null;
+        let currentChartAggregation = 'monthly';
+
+        let netWorthChartInstance = null, allocationChartInstance = null, assetClassChartInstance = null;
+
+        // ─── DOM refs ─────────────────────────────────────────────────────────────
+        const loadingState = document.getElementById('loading-state');
+        const errorState = document.getElementById('error-state');
+        const errorMessageSpan = document.getElementById('error-message');
+        const authView = document.getElementById('auth-view');
+        const authFormTitle = document.getElementById('auth-form-title');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const signInBtn = document.getElementById('sign-in-btn');
+        const signUpBtn = document.getElementById('sign-up-btn');
+        const toggleAuthModeBtn = document.getElementById('toggle-auth-mode-btn');
+        const authErrorMessage = document.getElementById('auth-error-message');
+        let isSignInMode = true;
+
+        const mainContent = document.getElementById('main-content');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const totalNetWorthDisplay = document.getElementById('total-net-worth');
+        const currencySelect = document.getElementById('currency-select');
+        const takeSnapshotBtn = document.getElementById('take-snapshot-btn');
+        const signOutBtn = document.getElementById('sign-out-btn');
+        const navDashboardBtn = document.getElementById('nav-dashboard');
+        const navAccountsBtn = document.getElementById('nav-accounts');
+        const navSettingsBtn = document.getElementById('nav-settings');
+        const dashboardView = document.getElementById('dashboard-view');
+        const accountsView = document.getElementById('accounts-view');
+        const settingsView = document.getElementById('settings-view');
+
+        const netWorthChartCanvas = document.getElementById('netWorthChart');
+        const noHistoryMessage = document.getElementById('no-history-message');
+        const netWorthChartContainer = document.getElementById('net-worth-chart-container');
+        const assetAllocationChartCanvas = document.getElementById('assetAllocationChart');
+        const noAllocationMessage = document.getElementById('no-allocation-message');
+        const allocationChartContainer = document.getElementById('allocation-chart-container');
+        const assetClassChartCanvas = document.getElementById('assetClassChart');
+        const noAssetClassMessage = document.getElementById('no-asset-class-message');
+        const assetClassChartContainer = document.getElementById('asset-class-chart-container');
+        const transactionsTableBody = document.getElementById('transactions-table-body');
+        const noTransactionsMessage = document.getElementById('no-transactions-message');
+        const transactionsTableContainer = document.getElementById('transactions-table-container');
+        const chartAggregationSelect = document.getElementById('chart-aggregation-select');
+        const snapshotsTableBody = document.getElementById('snapshots-table-body');
+        const noSnapshotsMessage = document.getElementById('no-snapshots-message');
+        const snapshotsTableContainer = document.getElementById('snapshots-table-container');
+
+        const addAssetBtn = document.getElementById('add-asset-btn');
+        const assetsTableBody = document.getElementById('assets-table-body');
+        const noAssetsMessage = document.getElementById('no-assets-message');
+        const assetsTableContainer = document.getElementById('assets-table-container');
+        const displayCurrencyAssets = document.getElementById('display-currency-assets');
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+
+        const newGroupNameInput = document.getElementById('new-group-name');
+        const addGroupBtn = document.getElementById('add-group-btn');
+        const accountGroupError = document.getElementById('account-group-error');
+        const noGroupsMessage = document.getElementById('no-groups-message');
+        const accountGroupsTable = document.getElementById('account-groups-table');
+        const accountGroupsTableBody = document.getElementById('account-groups-table-body');
+        const usdToInrRateInput = document.getElementById('usd-to-inr-rate');
+        const eurToInrRateInput = document.getElementById('eur-to-inr-rate');
+        const saveCurrencyRatesBtn = document.getElementById('save-currency-rates-btn');
+        const currencyRateError = document.getElementById('currency-rate-error');
+        const usdCurrencyDisplay = document.getElementById('usd-currency-display');
+        const eurCurrencyDisplay = document.getElementById('eur-currency-display');
+        const csvUploadInput = document.getElementById('csv-upload-input');
+        const uploadHistoryCsvBtn = document.getElementById('upload-history-csv-btn');
+        const exportHistoryCsvBtn = document.getElementById('export-history-csv-btn');
+        const historyCsvMessage = document.getElementById('history-csv-message');
+
+        // Modal refs
+        const addAssetModal = document.getElementById('add-asset-modal');
+        const addAssetError = document.getElementById('add-asset-error');
+        const newAssetNameInput = document.getElementById('new-asset-name');
+        const newAssetValueInput = document.getElementById('new-asset-value');
+        const newAssetCurrencySelect = document.getElementById('new-asset-currency');
+        const newAssetGroupSelect = document.getElementById('new-asset-group');
+        const newAssetAllocationInput = document.getElementById('new-asset-allocation');
+        const newAllocBar = document.getElementById('new-alloc-bar');
+        const newAllocTags = document.getElementById('new-alloc-tags');
+        const saveNewAssetBtn = document.getElementById('save-new-asset-btn');
+        const cancelAddAssetBtn = document.getElementById('cancel-add-asset-btn');
+
+        const adjustValueModal = document.getElementById('adjust-value-modal');
+        const adjustAssetNameSpan = document.getElementById('adjust-asset-name');
+        const adjustAssetCurrencySpan = document.getElementById('adjust-asset-currency');
+        const adjustCurrentValueSpan = document.getElementById('adjust-current-value');
+        const adjustValueError = document.getElementById('adjust-value-error');
+        const transactionTypeRadios = document.querySelectorAll('input[name="transactionType"]');
+        const transactionAmountSection = document.getElementById('transaction-amount-section');
+        const transactionAmountInput = document.getElementById('transaction-amount');
+        const transactionAbsoluteValueSection = document.getElementById('transaction-absolute-value-section');
+        const transactionAbsoluteValueInput = document.getElementById('transaction-absolute-value');
+        const transactionDescriptionInput = document.getElementById('transaction-description');
+        const applyTransactionBtn = document.getElementById('apply-transaction-btn');
+        const cancelTransactionBtn = document.getElementById('cancel-transaction-btn');
+
+        const editAssetModal = document.getElementById('edit-asset-modal');
+        const editAssetError = document.getElementById('edit-asset-error');
+        const editAssetNameInput = document.getElementById('edit-asset-name');
+        const editAssetGroupSelect = document.getElementById('edit-asset-group');
+        const editAssetAllocationInput = document.getElementById('edit-asset-allocation');
+        const editAllocBar = document.getElementById('edit-alloc-bar');
+        const editAllocTags = document.getElementById('edit-alloc-tags');
+        const saveEditedAssetBtn = document.getElementById('save-edited-asset-btn');
+        const cancelEditAssetBtn = document.getElementById('cancel-edit-asset-btn');
+
+        const editGroupModal = document.getElementById('edit-group-modal');
+        const editGroupNameInput = document.getElementById('edit-group-name');
+        const editGroupError = document.getElementById('edit-group-error');
+        const saveEditedGroupBtn = document.getElementById('save-edited-group-btn');
+        const cancelEditGroupBtn = document.getElementById('cancel-edit-group-btn');
+
+        // ─── Exchange rates ───────────────────────────────────────────────────────
+        let EXCHANGE_RATES = { USD_TO_INR: 83.5, EUR_TO_INR: 90.0, INR_TO_USD: 1/83.5, INR_TO_EUR: 1/90.0, USD_TO_EUR: 0.92, EUR_TO_USD: 1/0.92 };
+
+        function convertCurrency(value, fromCurrency, toCurrency) {
+            if (fromCurrency === toCurrency) return value;
+            let inr = value;
+            if (fromCurrency === 'USD') inr = value * EXCHANGE_RATES.USD_TO_INR;
+            else if (fromCurrency === 'EUR') inr = value * EXCHANGE_RATES.EUR_TO_INR;
+            if (toCurrency === 'INR') return inr;
+            if (toCurrency === 'USD') return inr * EXCHANGE_RATES.INR_TO_USD;
+            if (toCurrency === 'EUR') return inr * EXCHANGE_RATES.INR_TO_EUR;
+            return value;
+        }
+
+        // ─── UI helpers ───────────────────────────────────────────────────────────
+        let currentActiveView = 'dashboard';
+
+        function showLoading() { loadingState.classList.remove('hidden'); errorState.classList.add('hidden'); authView.classList.add('hidden'); mainContent.classList.add('hidden'); }
+        function showError(message) { loadingState.classList.add('hidden'); errorState.classList.remove('hidden'); authView.classList.add('hidden'); mainContent.classList.add('hidden'); errorMessageSpan.textContent = message; }
+        function showAuthView() { loadingState.classList.add('hidden'); errorState.classList.add('hidden'); mainContent.classList.add('hidden'); authView.classList.remove('hidden'); authErrorMessage.classList.add('hidden'); }
+        function showApp() { loadingState.classList.add('hidden'); errorState.classList.add('hidden'); authView.classList.add('hidden'); mainContent.classList.remove('hidden'); renderActiveView(currentActiveView); }
+
+        function showModal(modalElement, errorElement) {
+            modalElement.classList.remove('hidden');
+            setTimeout(() => { modalElement.classList.add('active'); modalElement.querySelector('.modal-content').classList.add('active'); }, 10);
+            if (errorElement) errorElement.classList.add('hidden');
+        }
+        function hideModal(modalElement, errorElement) {
+            modalElement.classList.remove('active');
+            modalElement.querySelector('.modal-content').classList.remove('active');
+            setTimeout(() => { modalElement.classList.add('hidden'); }, 300);
+            if (errorElement) errorElement.classList.add('hidden');
+        }
+
+        function renderActiveView(viewId) {
+            currentActiveView = viewId;
+            dashboardView.classList.add('hidden'); accountsView.classList.add('hidden'); settingsView.classList.add('hidden');
+            navDashboardBtn.classList.remove('active'); navAccountsBtn.classList.remove('active'); navSettingsBtn.classList.remove('active');
+            if (viewId === 'dashboard') { dashboardView.classList.remove('hidden'); navDashboardBtn.classList.add('active'); renderNetWorthSnapshotsTable(); }
+            else if (viewId === 'accounts') { accountsView.classList.remove('hidden'); navAccountsBtn.classList.add('active'); }
+            else if (viewId === 'settings') { settingsView.classList.remove('hidden'); navSettingsBtn.classList.add('active'); renderCurrencyRatesSettings(); }
+        }
+
+        function formatCurrency(value, currencyCode, includeDecimals = true) {
+            return value.toLocaleString(undefined, { style: 'currency', currency: currencyCode, minimumFractionDigits: includeDecimals ? 2 : 0, maximumFractionDigits: includeDecimals ? 2 : 0 });
+        }
+
+        // ─── Firebase init ────────────────────────────────────────────────────────
+        async function initializeFirebase() {
+            showLoading();
+            if (firebaseConfig && firebaseConfig.projectId) {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            currentUser = user;
+                            userIdDisplay.textContent = currentUser.uid;
+                            await loadInitialData(currentUser.uid);
+                            showApp();
+                            await checkAndTakeAutoSnapshots();
+                        } else {
+                            currentUser = null;
+                            showAuthView();
+                        }
+                    });
+                } catch (error) {
+                    showError("Failed to initialize Firebase.");
+                }
+            } else {
+                showError("Firebase configuration is missing.");
+            }
+        }
+
+        async function loadInitialData(uid) {
+            if (!db || !uid) { showError("Database or User ID not available."); return; }
+            const base = `artifacts/${firebaseConfig.projectId}/users/${uid}`;
+            try {
+                const [assetsSnap, txSnap, snapSnap, groupsSnap, ratesSnap] = await Promise.all([
+                    getDocs(collection(db, `${base}/assets`)),
+                    getDocs(collection(db, `${base}/transactions`)),
+                    getDocs(collection(db, `${base}/netWorthSnapshots`)),
+                    getDocs(collection(db, `${base}/customAccountGroups`)),
+                    getDoc(doc(db, `${base}/settings/currencyRates`))
+                ]);
+
+                assetsData = assetsSnap.docs.map(d => applyMigration({ id: d.id, ...d.data() }));
+                transactionsData = txSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.timestamp - a.timestamp);
+                netWorthSnapshotsData = snapSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.timestamp - b.timestamp);
+                customAccountGroupsData = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                if (ratesSnap.exists()) updateRates(ratesSnap.data());
+
+                // Real-time listeners
+                onSnapshot(collection(db, `${base}/assets`), snap => {
+                    assetsData = snap.docs.map(d => applyMigration({ id: d.id, ...d.data() }));
+                    renderAssetsTable(); updateNetWorthSummary(); renderAllocationChart(); renderAssetClassChart();
+                });
+                onSnapshot(collection(db, `${base}/transactions`), snap => {
+                    transactionsData = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.timestamp - a.timestamp);
+                    renderTransactionsTable();
+                });
+                onSnapshot(collection(db, `${base}/netWorthSnapshots`), snap => {
+                    netWorthSnapshotsData = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.timestamp - b.timestamp);
+                    renderNetWorthChart(); renderNetWorthSnapshotsTable();
+                });
+                onSnapshot(collection(db, `${base}/customAccountGroups`), snap => {
+                    customAccountGroupsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderAccountGroupsList(); populateAccountGroupDropdowns();
+                });
+                onSnapshot(doc(db, `${base}/settings/currencyRates`), docSnap => {
+                    if (docSnap.exists()) updateRates(docSnap.data());
+                    updateNetWorthSummary(); renderAssetsTable(); renderNetWorthChart(); renderAllocationChart(); renderAssetClassChart(); renderCurrencyRatesSettings();
+                });
+            } catch (error) {
+                showError("Failed to load initial data.");
+            }
+        }
+
+        // Apply migration: convert old equityPercentage to allocation object in memory
+        function applyMigration(asset) {
+            if (!asset.allocation) {
+                asset.allocation = migrateAllocation(asset);
+            }
+            return asset;
+        }
+
+        function updateRates(rates) {
+            EXCHANGE_RATES.USD_TO_INR = rates.USD_TO_INR || EXCHANGE_RATES.USD_TO_INR;
+            EXCHANGE_RATES.EUR_TO_INR = rates.EUR_TO_INR || EXCHANGE_RATES.EUR_TO_INR;
+            EXCHANGE_RATES.INR_TO_USD = 1 / EXCHANGE_RATES.USD_TO_INR;
+            EXCHANGE_RATES.INR_TO_EUR = 1 / EXCHANGE_RATES.EUR_TO_INR;
+            EXCHANGE_RATES.USD_TO_EUR = EXCHANGE_RATES.USD_TO_INR / EXCHANGE_RATES.EUR_TO_INR;
+            EXCHANGE_RATES.EUR_TO_USD = EXCHANGE_RATES.EUR_TO_INR / EXCHANGE_RATES.USD_TO_INR;
+        }
+
+        // ─── Rendering ────────────────────────────────────────────────────────────
+        function updateNetWorthSummary() {
+            let total = 0;
+            assetsData.forEach(a => { total += convertCurrency(a.value, a.currency, primaryDisplayCurrency); });
+            totalNetWorthDisplay.textContent = formatCurrency(total, primaryDisplayCurrency, false);
+            displayCurrencyAssets.textContent = primaryDisplayCurrency;
+        }
+
+        // Build the mini allocation bar HTML for the assets table
+        function buildMiniAllocCell(asset) {
+            const alloc = asset.allocation;
+            if (!alloc) return '<div class="mini-alloc-code" style="color:#d1d5db;">—</div>';
+            if (alloc.skip) return '<div class="mini-alloc-code" style="color:#d1d5db;">skip</div>';
+
+            const parts = ALLOC_KEYS.filter(k => alloc[k] > 0).map(k => ({ key: k, pct: alloc[k] }));
+            if (parts.length === 0) return '<div class="mini-alloc-code" style="color:#d1d5db;">—</div>';
+
+            const segs = parts.map(p => `<div class="alloc-bar-seg" style="flex:${p.pct};background:${ALLOC_COLORS[p.key]};"></div>`).join('');
+            const code = parts.map(p => `${p.pct}${ALLOC_SHORT[p.key]}`).join(' ');
+            return `<div class="mini-alloc-bar">${segs}</div><div class="mini-alloc-code">${code}</div>`;
+        }
+
+        function renderAssetsTable() {
+            assetsTableBody.innerHTML = '';
+            const sorted = [...assetsData].sort((a, b) => {
+                const ga = a.group || 'Other', gb = b.group || 'Other';
+                if (ga < gb) return -1; if (ga > gb) return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            if (sorted.length === 0) { noAssetsMessage.classList.remove('hidden'); assetsTableContainer.classList.add('hidden'); return; }
+            noAssetsMessage.classList.add('hidden'); assetsTableContainer.classList.remove('hidden');
+
+            let currentGroup = null, groupSubtotal = 0;
+            sorted.forEach((asset, index) => {
+                const assetGroup = asset.group || 'Other';
+                if (assetGroup !== currentGroup && currentGroup !== null) {
+                    const sr = assetsTableBody.insertRow();
+                    sr.className = 'bg-gray-100 font-semibold border-t-2 border-gray-300';
+                    sr.innerHTML = `<td class="py-2 px-4 whitespace-nowrap text-right" colspan="2">Total ${currentGroup}:</td><td class="py-2 px-4 whitespace-nowrap text-gray-800" colspan="4">${formatCurrency(groupSubtotal, primaryDisplayCurrency)}</td><td class="py-2 px-4"></td>`;
+                    groupSubtotal = 0;
+                }
+                currentGroup = assetGroup;
+                groupSubtotal += convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
+
+                const row = assetsTableBody.insertRow();
+                row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                row.innerHTML = `
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-900">${asset.name}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${asset.group}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${formatCurrency(asset.value, asset.currency)}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${formatCurrency(convertCurrency(asset.value, asset.currency, primaryDisplayCurrency), primaryDisplayCurrency)}</td>
+                    <td class="py-3 px-4 whitespace-nowrap">${buildMiniAllocCell(asset)}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${new Date(asset.updatedAt).toLocaleString()}</td>
+                    <td class="py-3 px-4 whitespace-nowrap">
+                        <div class="flex space-x-2">
+                            <button data-id="${asset.id}" class="adjust-value-btn bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full shadow-sm transition duration-200 ease-in-out transform hover:scale-110" title="Adjust Value">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                            </button>
+                            <button data-id="${asset.id}" class="edit-asset-btn bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full shadow-sm transition duration-200 ease-in-out transform hover:scale-110" title="Edit Asset">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button data-id="${asset.id}" class="delete-asset-btn bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-sm transition duration-200 ease-in-out transform hover:scale-110" title="Delete Asset">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                        </div>
+                    </td>`;
+                row.querySelector('.adjust-value-btn').addEventListener('click', e => openAdjustValueModal(e.currentTarget.dataset.id));
+                row.querySelector('.edit-asset-btn').addEventListener('click', e => openEditAssetModal(e.currentTarget.dataset.id));
+                row.querySelector('.delete-asset-btn').addEventListener('click', e => handleDeleteAsset(e.currentTarget.dataset.id));
+            });
+
+            if (currentGroup !== null) {
+                const sr = assetsTableBody.insertRow();
+                sr.className = 'bg-gray-100 font-semibold border-t-2 border-gray-300';
+                sr.innerHTML = `<td class="py-2 px-4 whitespace-nowrap text-right" colspan="2">Total ${currentGroup}:</td><td class="py-2 px-4 whitespace-nowrap text-gray-800" colspan="4">${formatCurrency(groupSubtotal, primaryDisplayCurrency)}</td><td class="py-2 px-4"></td>`;
+            }
+        }
+
+        function renderTransactionsTable() {
+            transactionsTableBody.innerHTML = '';
+            if (transactionsData.length === 0) { noTransactionsMessage.classList.remove('hidden'); transactionsTableContainer.classList.add('hidden'); return; }
+            noTransactionsMessage.classList.add('hidden'); transactionsTableContainer.classList.remove('hidden');
+            transactionsData.forEach((tx, index) => {
+                const row = transactionsTableBody.insertRow();
+                row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                const assetCurrency = assetsData.find(a => a.id === tx.assetId)?.currency || primaryDisplayCurrency;
+                const amountChangedClass = tx.amountChanged >= 0 ? 'text-green-600' : 'text-red-600';
+                const typeText = tx.type === 'add' ? 'Add' : tx.type === 'subtract' ? 'Subtract' : 'Update';
+                const typeClass = tx.type === 'add' ? 'text-green-600' : tx.type === 'subtract' ? 'text-red-600' : 'text-blue-600';
+                row.innerHTML = `
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-900">${new Date(tx.timestamp).toLocaleString()}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${tx.assetName}</td>
+                    <td class="py-3 px-4 whitespace-nowrap"><span class="font-semibold ${typeClass}">${typeText}</span></td>
+                    <td class="py-3 px-4 whitespace-nowrap font-semibold ${amountChangedClass}">${formatCurrency(tx.amountChanged, assetCurrency)}</td>
+                    <td class="py-3 px-4 whitespace-nowrap font-semibold text-gray-700">${formatCurrency(tx.newValue, assetCurrency)}</td>
+                    <td class="py-3 px-4 text-gray-700">${tx.description}</td>`;
+            });
+        }
+
+        function getAggregatedNetWorthData(snapshots, period) {
+            if (snapshots.length === 0) return { labels: [], data: [] };
+            const map = new Map();
+            snapshots.forEach(s => {
+                const d = new Date(s.timestamp);
+                let key;
+                if (period === 'quarterly') key = `Q${Math.floor(d.getMonth()/3)+1} ${d.getFullYear()}`;
+                else if (period === 'yearly') key = d.getFullYear().toString();
+                else key = d.toLocaleString('default', { month: 'short', year: 'numeric' });
+                map.set(key, s.totalNetWorth);
+            });
+            return { labels: Array.from(map.keys()), data: Array.from(map.values()) };
+        }
+
+        function renderNetWorthChart() {
+            const { labels, data } = getAggregatedNetWorthData(netWorthSnapshotsData, currentChartAggregation);
+            if (labels.length < 2) {
+                noHistoryMessage.classList.remove('hidden'); netWorthChartContainer.classList.add('hidden');
+                if (netWorthChartInstance) { netWorthChartInstance.destroy(); netWorthChartInstance = null; }
+                return;
+            }
+            noHistoryMessage.classList.add('hidden'); netWorthChartContainer.classList.remove('hidden');
+            if (netWorthChartInstance) {
+                netWorthChartInstance.data.labels = labels;
+                netWorthChartInstance.data.datasets[0].data = data;
+                netWorthChartInstance.data.datasets[0].label = `Net Worth (${primaryDisplayCurrency})`;
+                netWorthChartInstance.update();
+            } else {
+                netWorthChartInstance = new Chart(netWorthChartCanvas, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: `Net Worth (${primaryDisplayCurrency})`, data, borderColor: '#8884d8', tension: 0.1, fill: false }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: v => formatCurrency(v, primaryDisplayCurrency, false) } } }, plugins: { tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.raw, primaryDisplayCurrency, false)}` } } } }
+                });
+            }
+        }
+
+        function renderAllocationChart() {
+            const allocation = {};
+            assetsData.forEach(a => { const v = convertCurrency(a.value, a.currency, primaryDisplayCurrency); allocation[a.group] = (allocation[a.group] || 0) + v; });
+            const allocationData = Object.keys(allocation).map(g => ({ name: g, value: allocation[g] }));
+            if (allocationData.length === 0 || allocationData.every(d => d.value === 0)) {
+                noAllocationMessage.classList.remove('hidden'); allocationChartContainer.classList.add('hidden');
+                if (allocationChartInstance) { allocationChartInstance.destroy(); allocationChartInstance = null; } return;
+            }
+            noAllocationMessage.classList.add('hidden'); allocationChartContainer.classList.remove('hidden');
+            const labels = allocationData.map(d => d.name);
+            const data = allocationData.map(d => d.value);
+            const COLORS = ['#0088FE','#00C49F','#FFBB28','#FF8042','#AF19FF','#FF19A3'];
+            if (allocationChartInstance) {
+                allocationChartInstance.data.labels = labels;
+                allocationChartInstance.data.datasets[0].data = data;
+                allocationChartInstance.data.datasets[0].backgroundColor = labels.map((_,i) => COLORS[i % COLORS.length]);
+                allocationChartInstance.update();
+            } else {
+                allocationChartInstance = new Chart(assetAllocationChartCanvas, {
+                    type: 'pie',
+                    data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i) => COLORS[i%COLORS.length]), hoverOffset: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: ctx => { const sum = ctx.dataset.data.reduce((a,b)=>a+b,0); return `${ctx.label}: ${formatCurrency(ctx.raw, primaryDisplayCurrency)} (${(ctx.raw*100/sum).toFixed(0)}%)`; } } }, legend: { position: 'right' } } }
+                });
+            }
+        }
+
+        // ─── Asset Class Chart (replaces Equity vs Non-Equity) ───────────────────
+        function renderAssetClassChart() {
+            const totals = {};
+            let hasData = false;
+
+            assetsData.forEach(asset => {
+                const alloc = asset.allocation;
+                if (!alloc || alloc.skip) return; // skip excluded assets
+                const valueInPrimary = convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
+                ALLOC_KEYS.forEach(key => {
+                    if (alloc[key] > 0) {
+                        totals[key] = (totals[key] || 0) + valueInPrimary * (alloc[key] / 100);
+                        hasData = true;
+                    }
+                });
+            });
+
+            if (!hasData) {
+                noAssetClassMessage.classList.remove('hidden'); assetClassChartContainer.classList.add('hidden');
+                if (assetClassChartInstance) { assetClassChartInstance.destroy(); assetClassChartInstance = null; } return;
+            }
+            noAssetClassMessage.classList.add('hidden'); assetClassChartContainer.classList.remove('hidden');
+
+            const labels = ALLOC_KEYS.filter(k => totals[k] > 0).map(k => ALLOC_LABELS[k]);
+            const data   = ALLOC_KEYS.filter(k => totals[k] > 0).map(k => totals[k]);
+            const colors = ALLOC_KEYS.filter(k => totals[k] > 0).map(k => ALLOC_COLORS[k]);
+
+            if (assetClassChartInstance) {
+                assetClassChartInstance.data.labels = labels;
+                assetClassChartInstance.data.datasets[0].data = data;
+                assetClassChartInstance.data.datasets[0].backgroundColor = colors;
+                assetClassChartInstance.update();
+            } else {
+                assetClassChartInstance = new Chart(assetClassChartCanvas, {
+                    type: 'pie',
+                    data: { labels, datasets: [{ data, backgroundColor: colors, hoverOffset: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: ctx => { const sum = ctx.dataset.data.reduce((a,b)=>a+b,0); return `${ctx.label}: ${formatCurrency(ctx.raw, primaryDisplayCurrency)} (${(ctx.raw*100/sum).toFixed(0)}%)`; } } }, legend: { position: 'right' } } }
+                });
+            }
+        }
+
+        function renderAccountGroupsList() {
+            accountGroupsTableBody.innerHTML = '';
+            if (customAccountGroupsData.length === 0) { noGroupsMessage.classList.remove('hidden'); accountGroupsTable.classList.add('hidden'); return; }
+            noGroupsMessage.classList.add('hidden'); accountGroupsTable.classList.remove('hidden');
+            customAccountGroupsData.forEach((group, index) => {
+                const row = accountGroupsTableBody.insertRow();
+                row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                row.innerHTML = `
+                    <td class="py-2 px-4 text-gray-900">${group.name}</td>
+                    <td class="py-2 px-4">
+                        <button data-id="${group.id}" data-name="${group.name}" class="edit-group-btn bg-yellow-500 hover:bg-yellow-600 text-white p-1 rounded-full text-xs shadow-sm mr-2 transition duration-200 ease-in-out transform hover:scale-110" title="Edit Group">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button data-id="${group.id}" class="delete-group-btn bg-red-500 hover:bg-red-600 text-white p-1 rounded-full text-xs shadow-sm transition duration-200 ease-in-out transform hover:scale-110" title="Delete Group">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                    </td>`;
+                row.querySelector('.edit-group-btn').addEventListener('click', e => openEditGroupModal(e.currentTarget.dataset.id, e.currentTarget.dataset.name));
+                row.querySelector('.delete-group-btn').addEventListener('click', e => handleDeleteGroup(e.currentTarget.dataset.id, e.currentTarget.dataset.name));
+            });
+        }
+
+        function populateAccountGroupDropdowns() {
+            newAssetGroupSelect.innerHTML = '<option value="">Select a group (Optional)</option>';
+            editAssetGroupSelect.innerHTML = '<option value="">Select a group (Optional)</option>';
+            const defaultGroups = ["Banks","Brokerage Accounts","Mutual Funds","Immovable assets","Other"];
+            const allGroups = [...new Set([...defaultGroups, ...customAccountGroupsData.map(g => g.name)])].sort();
+            allGroups.forEach(name => {
+                [newAssetGroupSelect, editAssetGroupSelect].forEach(sel => {
+                    const o = document.createElement('option'); o.value = name; o.textContent = name; sel.appendChild(o);
+                });
+            });
+        }
+
+        function renderCurrencyRatesSettings() {
+            usdToInrRateInput.value = EXCHANGE_RATES.USD_TO_INR.toFixed(2);
+            eurToInrRateInput.value = EXCHANGE_RATES.EUR_TO_INR.toFixed(2);
+            usdCurrencyDisplay.textContent = primaryDisplayCurrency;
+            eurCurrencyDisplay.textContent = primaryDisplayCurrency;
+            currencyRateError.classList.add('hidden');
+        }
+
+        async function handleSaveCurrencyRates() {
+            if (!currentUser || !db) return;
+            const usdRate = parseFloat(usdToInrRateInput.value);
+            const eurRate = parseFloat(eurToInrRateInput.value);
+            if (isNaN(usdRate) || usdRate <= 0 || isNaN(eurRate) || eurRate <= 0) {
+                currencyRateError.textContent = "Please enter valid positive numbers."; currencyRateError.classList.remove('hidden'); return;
+            }
+            try {
+                await setDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/settings/currencyRates`), { USD_TO_INR: usdRate, EUR_TO_INR: eurRate, updatedAt: Date.now() });
+                currencyRateError.textContent = "Saved!"; currencyRateError.classList.remove('hidden','text-red-500'); currencyRateError.classList.add('text-green-500');
+            } catch (err) {
+                currencyRateError.textContent = "Failed: " + err.message; currencyRateError.classList.remove('hidden','text-green-500'); currencyRateError.classList.add('text-red-500');
+            }
+        }
+
+        function renderNetWorthSnapshotsTable() {
+            snapshotsTableBody.innerHTML = '';
+            if (netWorthSnapshotsData.length === 0) { noSnapshotsMessage.classList.remove('hidden'); snapshotsTableContainer.classList.add('hidden'); return; }
+            noSnapshotsMessage.classList.add('hidden'); snapshotsTableContainer.classList.remove('hidden');
+            [...netWorthSnapshotsData].sort((a,b) => b.timestamp - a.timestamp).forEach((s, index) => {
+                const row = snapshotsTableBody.insertRow();
+                row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                row.innerHTML = `
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-900">${new Date(s.timestamp).toLocaleString()}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${formatCurrency(s.totalNetWorth, s.currency)}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${s.currency}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${s.autoGenerated ? 'Auto' : 'Manual'}</td>
+                    <td class="py-3 px-4 whitespace-nowrap">
+                        <button data-id="${s.id}" class="delete-snapshot-btn bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-sm transition duration-200 ease-in-out transform hover:scale-110" title="Delete Snapshot">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                    </td>`;
+                row.querySelector('.delete-snapshot-btn').addEventListener('click', e => handleDeleteSnapshot(e.currentTarget.dataset.id));
+            });
+        }
+
+        // ─── Modals ───────────────────────────────────────────────────────────────
+        function openAddAssetModal() {
+            newAssetNameInput.value = ''; newAssetValueInput.value = ''; newAssetCurrencySelect.value = 'INR'; newAssetGroupSelect.value = '';
+            newAssetAllocationInput.value = '';
+            renderAllocFeedback('', newAllocBar, newAllocTags);
+            populateAccountGroupDropdowns();
+            showModal(addAssetModal, addAssetError);
+        }
+        function closeAddAssetModal() { hideModal(addAssetModal, addAssetError); }
+
+        function openAdjustValueModal(assetId) {
+            selectedAssetForAdjustment = assetsData.find(a => a.id === assetId);
+            if (selectedAssetForAdjustment) {
+                adjustAssetNameSpan.textContent = selectedAssetForAdjustment.name;
+                adjustAssetCurrencySpan.textContent = selectedAssetForAdjustment.currency;
+                adjustCurrentValueSpan.textContent = formatCurrency(selectedAssetForAdjustment.value, selectedAssetForAdjustment.currency);
+                transactionAmountInput.value = ''; transactionAbsoluteValueInput.value = ''; transactionDescriptionInput.value = '';
+                document.querySelector('input[name="transactionType"]:checked').checked = false;
+                document.querySelector('input[name="transactionType"][value="add"]').checked = true;
+                transactionAmountSection.classList.remove('hidden'); transactionAbsoluteValueSection.classList.add('hidden');
+                showModal(adjustValueModal, adjustValueError);
+            }
+        }
+        function closeAdjustValueModal() { hideModal(adjustValueModal, adjustValueError); selectedAssetForAdjustment = null; }
+
+        function openEditAssetModal(assetId) {
+            currentEditAssetId = assetId;
+            const asset = assetsData.find(a => a.id === assetId);
+            if (asset) {
+                editAssetNameInput.value = asset.name;
+                populateAccountGroupDropdowns();
+                editAssetGroupSelect.value = asset.group || '';
+                const allocStr = allocObjectToString(asset.allocation);
+                editAssetAllocationInput.value = allocStr;
+                renderAllocFeedback(allocStr, editAllocBar, editAllocTags);
+                showModal(editAssetModal, editAssetError);
+            }
+        }
+        function closeEditAssetModal() { hideModal(editAssetModal, editAssetError); currentEditAssetId = null; }
+
+        function openEditGroupModal(groupId, groupName) { currentEditGroupId = groupId; editGroupNameInput.value = groupName; showModal(editGroupModal, editGroupError); }
+        function closeEditGroupModal() { hideModal(editGroupModal, editGroupError); currentEditGroupId = null; editGroupNameInput.value = ''; }
+
+        const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+        const confirmDeleteTitle = document.getElementById('confirm-delete-title');
+        const confirmDeleteMessage = document.getElementById('confirm-delete-message');
+        const confirmDeleteOkBtn = document.getElementById('confirm-delete-ok-btn');
+        const confirmDeleteCancelBtn = document.getElementById('confirm-delete-cancel-btn');
+
+        // Generic confirm-then-execute helper
+        function confirmDelete(title, message, onConfirm) {
+            confirmDeleteTitle.textContent = title;
+            confirmDeleteMessage.textContent = message;
+            showModal(confirmDeleteModal, null);
+            // Replace listeners each time to avoid stacking
+            const ok = confirmDeleteOkBtn.cloneNode(true);
+            const cancel = confirmDeleteCancelBtn.cloneNode(true);
+            confirmDeleteOkBtn.replaceWith(ok);
+            confirmDeleteCancelBtn.replaceWith(cancel);
+            ok.addEventListener('click', () => { hideModal(confirmDeleteModal, null); onConfirm(); });
+            cancel.addEventListener('click', () => hideModal(confirmDeleteModal, null));
+        }
+        function toggleAuthMode() {
+            isSignInMode = !isSignInMode;
+            authFormTitle.textContent = isSignInMode ? 'Sign In' : 'Sign Up';
+            signInBtn.classList.toggle('hidden', !isSignInMode);
+            signUpBtn.classList.toggle('hidden', isSignInMode);
+            toggleAuthModeBtn.textContent = isSignInMode ? 'Switch to Sign Up' : 'Switch to Sign In';
+            authErrorMessage.classList.add('hidden'); authEmailInput.value = ''; authPasswordInput.value = '';
+        }
+        async function handleSignIn() {
+            const email = authEmailInput.value.trim(), password = authPasswordInput.value.trim();
+            if (!email || !password) { authErrorMessage.textContent = "Please enter both email and password."; authErrorMessage.classList.remove('hidden'); return; }
+            try { await signInWithEmailAndPassword(auth, email, password); } catch (e) { authErrorMessage.textContent = e.message; authErrorMessage.classList.remove('hidden'); }
+        }
+        async function handleSignUp() {
+            const email = authEmailInput.value.trim(), password = authPasswordInput.value.trim();
+            if (!email || !password) { authErrorMessage.textContent = "Please enter both email and password."; authErrorMessage.classList.remove('hidden'); return; }
+            if (password.length < 6) { authErrorMessage.textContent = "Password should be at least 6 characters."; authErrorMessage.classList.remove('hidden'); return; }
+            try { await createUserWithEmailAndPassword(auth, email, password); } catch (e) { authErrorMessage.textContent = e.message; authErrorMessage.classList.remove('hidden'); }
+        }
+        async function handleSignOut() { try { await signOut(auth); } catch (e) { showError("Failed to sign out: " + e.message); } }
+
+        // ─── Asset CRUD ───────────────────────────────────────────────────────────
+        async function handleAddAssetSubmit() {
+            if (!currentUser || !db) return;
+            const name = newAssetNameInput.value.trim();
+            const value = parseFloat(newAssetValueInput.value);
+            const currency = newAssetCurrencySelect.value;
+            const group = newAssetGroupSelect.value || 'Other';
+            const allocStr = newAssetAllocationInput.value.trim();
+
+            if (!name || isNaN(value) || value <= 0) { addAssetError.textContent = "Please enter a valid asset name and a positive value."; addAssetError.classList.remove('hidden'); return; }
+
+            let allocationObj = null;
+            if (allocStr) {
+                const result = parseAllocation(allocStr);
+                if (result.error) { addAssetError.textContent = result.error; addAssetError.classList.remove('hidden'); return; }
+                allocationObj = allocResultToObject(result);
+            }
+
+            try {
+                await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`), {
+                    name, value, currency, group,
+                    allocation: allocationObj,
+                    createdAt: Date.now(), updatedAt: Date.now()
+                });
+                closeAddAssetModal();
+            } catch (err) { addAssetError.textContent = "Failed to add asset: " + err.message; addAssetError.classList.remove('hidden'); }
+        }
+
+        async function handleUpdateAssetValue() {
+            if (!currentUser || !db || !selectedAssetForAdjustment) return;
+            let newValue, amountChanged;
+            let desc = transactionDescriptionInput.value.trim();
+            const txType = document.querySelector('input[name="transactionType"]:checked').value;
+
+            if (txType === 'absolute') {
+                const abs = parseFloat(transactionAbsoluteValueInput.value);
+                if (isNaN(abs) || abs < 0) { adjustValueError.textContent = "Please enter a valid non-negative absolute value."; adjustValueError.classList.remove('hidden'); return; }
+                amountChanged = abs - selectedAssetForAdjustment.value; newValue = abs;
+                desc = desc || `Updated to absolute value ${formatCurrency(abs, selectedAssetForAdjustment.currency)}`;
+            } else {
+                const amount = parseFloat(transactionAmountInput.value);
+                if (isNaN(amount) || amount <= 0) { adjustValueError.textContent = "Please enter a valid positive amount."; adjustValueError.classList.remove('hidden'); return; }
+                if (txType === 'add') { newValue = selectedAssetForAdjustment.value + amount; amountChanged = amount; desc = desc || `Added ${formatCurrency(amount, selectedAssetForAdjustment.currency)} to ${selectedAssetForAdjustment.name}`; }
+                else { newValue = selectedAssetForAdjustment.value - amount; amountChanged = -amount; desc = desc || `Subtracted ${formatCurrency(amount, selectedAssetForAdjustment.currency)} from ${selectedAssetForAdjustment.name}`; }
+                if (newValue < 0) { adjustValueError.textContent = "Asset value cannot go below zero."; adjustValueError.classList.remove('hidden'); return; }
+            }
+            try {
+                const uid = currentUser.uid;
+                await updateDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${uid}/assets`, selectedAssetForAdjustment.id), { value: newValue, updatedAt: Date.now() });
+                await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${uid}/transactions`), { assetId: selectedAssetForAdjustment.id, assetName: selectedAssetForAdjustment.name, oldValue: selectedAssetForAdjustment.value, newValue, amountChanged, type: txType, description: desc, timestamp: Date.now() });
+                closeAdjustValueModal();
+            } catch (err) { adjustValueError.textContent = "Failed: " + err.message; adjustValueError.classList.remove('hidden'); }
+        }
+
+        async function handleEditAssetSubmit() {
+            if (!currentUser || !db || !currentEditAssetId) return;
+            const name = editAssetNameInput.value.trim();
+            const group = editAssetGroupSelect.value || 'Other';
+            const allocStr = editAssetAllocationInput.value.trim();
+
+            if (!name) { editAssetError.textContent = "Asset name cannot be empty."; editAssetError.classList.remove('hidden'); return; }
+
+            let allocationObj = null;
+            if (allocStr) {
+                const result = parseAllocation(allocStr);
+                if (result.error) { editAssetError.textContent = result.error; editAssetError.classList.remove('hidden'); return; }
+                allocationObj = allocResultToObject(result);
+            }
+
+            try {
+                await updateDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`, currentEditAssetId), { name, group, allocation: allocationObj, updatedAt: Date.now() });
+                closeEditAssetModal();
+            } catch (err) { editAssetError.textContent = "Failed: " + err.message; editAssetError.classList.remove('hidden'); }
+        }
+
+        async function handleDeleteAsset(assetId) {
+            if (!currentUser || !db) return;
+            const asset = assetsData.find(a => a.id === assetId);
+            const name = asset ? asset.name : 'this asset';
+            confirmDelete(
+                'Delete asset?',
+                `"${name}" and all its transaction history will be permanently deleted.`,
+                async () => {
+                    try {
+                        await deleteDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`, assetId));
+                        const q = query(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/transactions`), where("assetId", "==", assetId));
+                        (await getDocs(q)).forEach(async d => await deleteDoc(d.ref));
+                    } catch (err) { showError("Failed to delete asset: " + err.message); }
+                }
+            );
+        }
+
+        async function handleTakeSnapshot() {
+            if (!currentUser || !db) return;
+            let total = 0;
+            assetsData.forEach(a => { total += convertCurrency(a.value, a.currency, primaryDisplayCurrency); });
+            try { await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/netWorthSnapshots`), { totalNetWorth: total, currency: primaryDisplayCurrency, timestamp: Date.now() }); }
+            catch (err) { showError("Failed to take snapshot: " + err.message); }
+        }
+
+        async function takeAutoSnapshot(dateToSnapshot) {
+            if (!currentUser || !db) return;
+            let total = 0;
+            assetsData.forEach(a => { total += convertCurrency(a.value, a.currency, primaryDisplayCurrency); });
+            try { await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/netWorthSnapshots`), { totalNetWorth: total, currency: primaryDisplayCurrency, timestamp: dateToSnapshot.getTime(), autoGenerated: true }); }
+            catch (err) { console.error("Auto-snapshot failed:", err); }
+        }
+
+        async function checkAndTakeAutoSnapshots() {
+            if (!currentUser || !db) return;
+            const now = new Date();
+            const eod = d => { const x = new Date(d); x.setHours(23,59,59,999); return x.getTime(); };
+            const lastOfPrev = new Date(now.getFullYear(), now.getMonth(), 0);
+            if (now.getMonth() > 0 && !netWorthSnapshotsData.some(s => eod(new Date(s.timestamp)) === eod(lastOfPrev))) {
+                await takeAutoSnapshot(lastOfPrev);
+            }
+            const lastOfCurr = new Date(now.getFullYear(), now.getMonth()+1, 0);
+            if (eod(now) === eod(lastOfCurr) && !netWorthSnapshotsData.some(s => eod(new Date(s.timestamp)) === eod(lastOfCurr))) {
+                await takeAutoSnapshot(lastOfCurr);
+            }
+        }
+
+        // ─── Group CRUD ───────────────────────────────────────────────────────────
+        async function handleAddGroup() {
+            if (!currentUser || !db) return;
+            const name = newGroupNameInput.value.trim();
+            if (!name) { accountGroupError.textContent = "Group name cannot be empty."; accountGroupError.classList.remove('hidden'); return; }
+            if (customAccountGroupsData.some(g => g.name.toLowerCase() === name.toLowerCase())) { accountGroupError.textContent = "Group already exists."; accountGroupError.classList.remove('hidden'); return; }
+            try { await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/customAccountGroups`), { name, createdAt: Date.now() }); newGroupNameInput.value = ''; accountGroupError.classList.add('hidden'); }
+            catch (err) { accountGroupError.textContent = "Failed: " + err.message; accountGroupError.classList.remove('hidden'); }
+        }
+        async function handleEditGroupSubmit() {
+            if (!currentUser || !db || !currentEditGroupId) return;
+            const newName = editGroupNameInput.value.trim();
+            if (!newName) { editGroupError.textContent = "Group name cannot be empty."; editGroupError.classList.remove('hidden'); return; }
+            if (customAccountGroupsData.some(g => g.id !== currentEditGroupId && g.name.toLowerCase() === newName.toLowerCase())) { editGroupError.textContent = "Another group with this name exists."; editGroupError.classList.remove('hidden'); return; }
+            try { await updateDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/customAccountGroups`, currentEditGroupId), { name: newName }); closeEditGroupModal(); }
+            catch (err) { editGroupError.textContent = "Failed: " + err.message; editGroupError.classList.remove('hidden'); }
+        }
+        async function handleDeleteGroup(groupId, groupName) {
+            if (!currentUser || !db) return;
+            confirmDelete(
+                'Delete group?',
+                `"${groupName}" will be deleted. Assets in this group will be moved to Other.`,
+                async () => {
+                    try {
+                        await deleteDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/customAccountGroups`, groupId));
+                        const q = query(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`), where("group","==",groupName));
+                        (await getDocs(q)).forEach(async d => await updateDoc(d.ref, { group: 'Other' }));
+                    } catch (err) { showError("Failed to delete group: " + err.message); }
+                }
+            );
+        }
+
+        async function handleDeleteSnapshot(snapshotId) {
+            if (!currentUser || !db) return;
+            confirmDelete(
+                'Delete snapshot?',
+                'This snapshot will be removed from your net worth history chart.',
+                async () => {
+                    try { await deleteDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/netWorthSnapshots`, snapshotId)); }
+                    catch (err) { showError("Failed to delete snapshot: " + err.message); }
+                }
+            );
+        }
+
+        // ─── CSV export/import ────────────────────────────────────────────────────
+        function exportAssetsToCSV() {
+            if (assetsData.length === 0) return;
+            const headers = ["Asset Name","Group","Value","Currency",`Value (${primaryDisplayCurrency})`,"Allocation","Last Updated"];
+            const rows = assetsData.map(a => [
+                `"${a.name.replace(/"/g,'""')}"`,
+                `"${(a.group||'Other').replace(/"/g,'""')}"`,
+                a.value.toFixed(2), a.currency,
+                convertCurrency(a.value, a.currency, primaryDisplayCurrency).toFixed(2),
+                `"${allocObjectToString(a.allocation) || ''}"`,
+                new Date(a.updatedAt).toLocaleString()
+            ]);
+            const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            link.download = `net_worth_assets_${new Date().toISOString().slice(0,10)}.csv`;
+            link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function exportHistoryToCSV() {
+            if (netWorthSnapshotsData.length === 0) return;
+            const headers = ["Date","Total Net Worth","Currency","Auto Generated"];
+            const rows = netWorthSnapshotsData.map(s => {
+                const d = new Date(s.timestamp);
+                const fd = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+                return [`"${fd}"`, s.totalNetWorth.toFixed(2), s.currency, s.autoGenerated ? 'TRUE' : 'FALSE'];
+            });
+            const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            link.download = `net_worth_history_${new Date().toISOString().slice(0,10)}.csv`;
+            link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        async function uploadHistoryFromCSV() {
+            if (!currentUser || !db) return;
+            const file = csvUploadInput.files[0];
+            if (!file) { historyCsvMessage.textContent = "Please select a CSV file."; historyCsvMessage.classList.remove('hidden'); return; }
+            historyCsvMessage.textContent = "Processing..."; historyCsvMessage.classList.remove('hidden','text-red-500','text-green-500'); historyCsvMessage.classList.add('text-blue-500');
+            const reader = new FileReader();
+            reader.onload = async e => {
+                const lines = e.target.result.split('\n').filter(l => l.trim());
+                if (lines.length <= 1) { historyCsvMessage.textContent = "CSV is empty or headers only."; historyCsvMessage.classList.replace('text-blue-500','text-red-500'); return; }
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+                const expected = ["Date","Total Net Worth","Currency","Auto Generated"];
+                if (!expected.every((v,i) => v === headers[i])) { historyCsvMessage.textContent = "Headers must be: Date,Total Net Worth,Currency,Auto Generated"; historyCsvMessage.classList.replace('text-blue-500','text-red-500'); return; }
+                let ok = 0, failed = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(',').map(c => c.trim().replace(/"/g,''));
+                    if (cols.length !== 4) { failed.push(`Row ${i+1}: wrong columns`); continue; }
+                    const ts = new Date(cols[0]).getTime(), nw = parseFloat(cols[1]);
+                    if (isNaN(ts) || isNaN(nw) || !['INR','USD','EUR'].includes(cols[2])) { failed.push(`Row ${i+1}: invalid data`); continue; }
+                    try { await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/netWorthSnapshots`), { totalNetWorth: nw, currency: cols[2], timestamp: ts, autoGenerated: cols[3]==='TRUE' }); ok++; }
+                    catch (err) { failed.push(`Row ${i+1}: ${err.message}`); }
+                }
+                historyCsvMessage.textContent = `Imported ${ok} snapshots.${failed.length ? ' Errors: '+failed.join('; ') : ''}`;
+                historyCsvMessage.classList.remove('text-blue-500'); historyCsvMessage.classList.add(ok > 0 ? 'text-green-500' : 'text-red-500');
+                csvUploadInput.value = '';
+            };
+            reader.onerror = () => { historyCsvMessage.textContent = "Failed to read file."; historyCsvMessage.classList.replace('text-blue-500','text-red-500'); };
+            reader.readAsText(file);
+        }
+
+        // ─── Event listeners ──────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', initializeFirebase);
+
+        toggleAuthModeBtn.addEventListener('click', toggleAuthMode);
+        signInBtn.addEventListener('click', handleSignIn);
+        signUpBtn.addEventListener('click', handleSignUp);
+        signOutBtn.addEventListener('click', handleSignOut);
+
+        navDashboardBtn.addEventListener('click', () => renderActiveView('dashboard'));
+        navAccountsBtn.addEventListener('click', () => renderActiveView('accounts'));
+        navSettingsBtn.addEventListener('click', () => renderActiveView('settings'));
+
+        currencySelect.addEventListener('change', e => {
+            primaryDisplayCurrency = e.target.value;
+            updateNetWorthSummary(); renderAssetsTable(); renderNetWorthChart(); renderAllocationChart(); renderAssetClassChart(); renderNetWorthSnapshotsTable();
+        });
+
+        takeSnapshotBtn.addEventListener('click', handleTakeSnapshot);
+        addAssetBtn.addEventListener('click', openAddAssetModal);
+        exportCsvBtn.addEventListener('click', exportAssetsToCSV);
+
+        saveNewAssetBtn.addEventListener('click', handleAddAssetSubmit);
+        cancelAddAssetBtn.addEventListener('click', closeAddAssetModal);
+
+        // Live feedback on allocation inputs
+        newAssetAllocationInput.addEventListener('input', () => renderAllocFeedback(newAssetAllocationInput.value, newAllocBar, newAllocTags));
+        editAssetAllocationInput.addEventListener('input', () => renderAllocFeedback(editAssetAllocationInput.value, editAllocBar, editAllocTags));
+
+        transactionTypeRadios.forEach(r => r.addEventListener('change', e => {
+            if (e.target.value === 'absolute') { transactionAmountSection.classList.add('hidden'); transactionAbsoluteValueSection.classList.remove('hidden'); }
+            else { transactionAmountSection.classList.remove('hidden'); transactionAbsoluteValueSection.classList.add('hidden'); }
+        }));
+        applyTransactionBtn.addEventListener('click', handleUpdateAssetValue);
+        cancelTransactionBtn.addEventListener('click', closeAdjustValueModal);
+
+        saveEditedAssetBtn.addEventListener('click', handleEditAssetSubmit);
+        cancelEditAssetBtn.addEventListener('click', closeEditAssetModal);
+
+        addGroupBtn.addEventListener('click', handleAddGroup);
+        saveEditedGroupBtn.addEventListener('click', handleEditGroupSubmit);
+        cancelEditGroupBtn.addEventListener('click', closeEditGroupModal);
+
+        uploadHistoryCsvBtn.addEventListener('click', uploadHistoryFromCSV);
+        exportHistoryCsvBtn.addEventListener('click', exportHistoryToCSV);
+
+        chartAggregationSelect.addEventListener('change', e => { currentChartAggregation = e.target.value; renderNetWorthChart(); });
+        saveCurrencyRatesBtn.addEventListener('click', handleSaveCurrencyRates);
+
+    </script>
+</body>
+</html>
