@@ -423,9 +423,9 @@
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Update Type:</label>
                 <div class="flex space-x-4">
-                    <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="transactionType" value="add" checked/><span class="ml-2">Add</span></label>
+                    <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="transactionType" value="add"/><span class="ml-2">Add</span></label>
                     <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="transactionType" value="subtract"/><span class="ml-2">Subtract</span></label>
-                    <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="transactionType" value="absolute"/><span class="ml-2">Set Absolute Value</span></label>
+                    <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="transactionType" value="absolute" checked/><span class="ml-2">Set Absolute Value</span></label>
                 </div>
             </div>
             <div id="transaction-amount-section" class="mb-4">
@@ -1221,8 +1221,8 @@
                 adjustCurrentValueSpan.textContent = formatCurrency(selectedAssetForAdjustment.value, selectedAssetForAdjustment.currency);
                 transactionAmountInput.value = ''; transactionAbsoluteValueInput.value = ''; transactionDescriptionInput.value = '';
                 document.querySelector('input[name="transactionType"]:checked').checked = false;
-                document.querySelector('input[name="transactionType"][value="add"]').checked = true;
-                transactionAmountSection.classList.remove('hidden'); transactionAbsoluteValueSection.classList.add('hidden');
+                document.querySelector('input[name="transactionType"][value="absolute"]').checked = true;
+                transactionAmountSection.classList.add('hidden'); transactionAbsoluteValueSection.classList.remove('hidden');
                 showModal(adjustValueModal, adjustValueError);
             }
         }
