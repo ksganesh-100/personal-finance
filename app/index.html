@@ -101,6 +101,21 @@
         .alloc-tag-ok   { background: #d1fae5; color: #065f46; }
         .alloc-tag-err  { background: #fee2e2; color: #991b1b; }
 
+        /* Member filter chips */
+        .member-chip {
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: all 0.15s;
+            background: #374151;
+            color: #d1d5db;
+        }
+        .member-chip:hover { background: #4b5563; color: #fff; }
+        .member-chip.active { background: #0d9488; color: #fff; border-color: #0d9488; }
+
         /* Mini bar in table */
         .mini-alloc-bar {
             display: flex;
@@ -161,6 +176,9 @@
                     <button id="sign-out-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200 ease-in-out transform hover:scale-105 ml-4">Sign Out</button>
                 </nav>
             </header>
+
+            <!-- Member Filter Bar -->
+            <div id="member-filter-bar" class="hidden flex flex-wrap gap-2 px-2 pb-4 -mt-2 mb-2"></div>
 
             <!-- Dashboard View -->
             <div id="dashboard-view" class="view-section">
@@ -300,6 +318,7 @@
                                 <tr>
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Asset Name</th>
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Group</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Member</th>
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value</th>
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Value (<span id="display-currency-assets">INR</span>)</th>
                                     <th class="py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Allocation</th>
@@ -336,6 +355,27 @@
                                 </tr>
                             </thead>
                             <tbody id="account-groups-table-body" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mb-8 p-6 bg-gray-50 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Family Members</h2>
+                    <p id="family-member-error" class="text-red-500 mb-4 hidden"></p>
+                    <div class="flex mb-4">
+                        <input type="text" id="new-member-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 mr-2" placeholder="e.g. Ganesh, Dad, Spouse"/>
+                        <button id="add-member-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Add Member</button>
+                    </div>
+                    <div id="family-members-list">
+                        <p id="no-members-message" class="text-gray-500 text-center py-4 hidden">No family members added yet.</p>
+                        <table id="family-members-table" class="min-w-full bg-white border-collapse hidden">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-700 uppercase">Name</th>
+                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-700 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="family-members-table-body" class="divide-y divide-gray-200"></tbody>
                         </table>
                     </div>
                 </div>
@@ -397,6 +437,12 @@
                 <label for="new-asset-group" class="block text-gray-700 text-sm font-bold mb-2">Asset Group:</label>
                 <select id="new-asset-group" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
                     <option value="">Select a group (Optional)</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="new-asset-member" class="block text-gray-700 text-sm font-bold mb-2">Family Member:</label>
+                <select id="new-asset-member" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
+                    <option value="">Unassigned</option>
                 </select>
             </div>
             <!-- Allocation smart input -->
@@ -462,6 +508,12 @@
                     <option value="">Select a group (Optional)</option>
                 </select>
             </div>
+            <div class="mb-4">
+                <label for="edit-asset-member" class="block text-gray-700 text-sm font-bold mb-2">Family Member:</label>
+                <select id="edit-asset-member" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
+                    <option value="">Unassigned</option>
+                </select>
+            </div>
             <!-- Allocation smart input -->
             <div class="mb-6">
                 <label for="edit-asset-allocation" class="block text-gray-700 text-sm font-bold mb-1">Asset Class Allocation:</label>
@@ -489,6 +541,22 @@
             <div class="flex items-center justify-between">
                 <button id="save-edited-group-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Save Changes</button>
                 <button id="cancel-edit-group-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Family Member Modal -->
+    <div id="edit-member-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold mb-4">Edit Family Member</h3>
+            <p id="edit-member-error" class="text-red-500 mb-4 hidden"></p>
+            <div class="mb-4">
+                <label for="edit-member-name" class="block text-gray-700 text-sm font-bold mb-2">Name:</label>
+                <input type="text" id="edit-member-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50" placeholder="e.g. Ganesh"/>
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="save-edited-member-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Save Changes</button>
+                <button id="cancel-edit-member-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">Cancel</button>
             </div>
         </div>
     </div>
@@ -666,11 +734,12 @@
 
         // ─── App state ────────────────────────────────────────────────────────────
         let app, db, auth, currentUser = null;
-        let assetsData = [], transactionsData = [], netWorthSnapshotsData = [], customAccountGroupsData = [];
+        let assetsData = [], transactionsData = [], netWorthSnapshotsData = [], customAccountGroupsData = [], familyMembersData = [];
         let primaryDisplayCurrency = 'INR';
         let selectedAssetForAdjustment = null;
-        let currentEditAssetId = null, currentEditGroupId = null;
+        let currentEditAssetId = null, currentEditGroupId = null, currentEditMemberId = null;
         let currentChartAggregation = 'monthly';
+        let activeMember = null;
 
         let netWorthChartInstance = null, allocationChartInstance = null, assetClassChartInstance = null;
 
@@ -785,6 +854,21 @@
         const saveEditedGroupBtn = document.getElementById('save-edited-group-btn');
         const cancelEditGroupBtn = document.getElementById('cancel-edit-group-btn');
 
+        const memberFilterBar = document.getElementById('member-filter-bar');
+        const newAssetMemberSelect = document.getElementById('new-asset-member');
+        const editAssetMemberSelect = document.getElementById('edit-asset-member');
+        const newMemberNameInput = document.getElementById('new-member-name');
+        const addMemberBtn = document.getElementById('add-member-btn');
+        const familyMemberError = document.getElementById('family-member-error');
+        const noMembersMessage = document.getElementById('no-members-message');
+        const familyMembersTable = document.getElementById('family-members-table');
+        const familyMembersTableBody = document.getElementById('family-members-table-body');
+        const editMemberModal = document.getElementById('edit-member-modal');
+        const editMemberNameInput = document.getElementById('edit-member-name');
+        const editMemberError = document.getElementById('edit-member-error');
+        const saveEditedMemberBtn = document.getElementById('save-edited-member-btn');
+        const cancelEditMemberBtn = document.getElementById('cancel-edit-member-btn');
+
         // ─── Exchange rates ───────────────────────────────────────────────────────
         let EXCHANGE_RATES = { USD_TO_INR: 83.5, EUR_TO_INR: 90.0, INR_TO_USD: 1/83.5, INR_TO_EUR: 1/90.0, USD_TO_EUR: 0.92, EUR_TO_USD: 1/0.92 };
 
@@ -896,6 +980,10 @@
                     customAccountGroupsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     renderAccountGroupsList(); populateAccountGroupDropdowns();
                 });
+                onSnapshot(collection(db, `${base}/familyMembers`), snap => {
+                    familyMembersData = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                    renderFamilyFilterBar(); populateMemberDropdowns(); renderFamilyMembersList();
+                });
                 onSnapshot(doc(db, `${base}/settings/currencyRates`), docSnap => {
                     if (docSnap.exists()) updateRates(docSnap.data());
                     updateNetWorthSummary(); renderAssetsTable(); renderNetWorthChart(); renderAllocationChart(); renderAssetClassChart(); renderCurrencyRatesSettings();
@@ -923,9 +1011,14 @@
         }
 
         // ─── Rendering ────────────────────────────────────────────────────────────
+        function getFilteredAssets() {
+            if (!activeMember) return assetsData;
+            return assetsData.filter(a => (a.member || null) === activeMember);
+        }
+
         function updateNetWorthSummary() {
             let total = 0;
-            assetsData.forEach(a => { total += convertCurrency(a.value, a.currency, primaryDisplayCurrency); });
+            getFilteredAssets().forEach(a => { total += convertCurrency(a.value, a.currency, primaryDisplayCurrency); });
             totalNetWorthDisplay.textContent = formatCurrency(total, primaryDisplayCurrency, false);
             displayCurrencyAssets.textContent = primaryDisplayCurrency;
         }
@@ -946,7 +1039,7 @@
 
         function renderAssetsTable() {
             assetsTableBody.innerHTML = '';
-            const sorted = [...assetsData].sort((a, b) => {
+            const sorted = [...getFilteredAssets()].sort((a, b) => {
                 const ga = a.group || 'Other', gb = b.group || 'Other';
                 if (ga < gb) return -1; if (ga > gb) return 1;
                 return a.name.localeCompare(b.name);
@@ -961,7 +1054,7 @@
                 if (assetGroup !== currentGroup && currentGroup !== null) {
                     const sr = assetsTableBody.insertRow();
                     sr.className = 'bg-gray-100 font-semibold border-t-2 border-gray-300';
-                    sr.innerHTML = `<td class="py-2 px-4 whitespace-nowrap text-right" colspan="2">Total ${currentGroup}:</td><td class="py-2 px-4 whitespace-nowrap text-gray-800" colspan="4">${formatCurrency(groupSubtotal, primaryDisplayCurrency)}</td><td class="py-2 px-4"></td>`;
+                    sr.innerHTML = `<td class="py-2 px-4 whitespace-nowrap text-right" colspan="2">Total ${currentGroup}:</td><td class="py-2 px-4 whitespace-nowrap text-gray-800" colspan="5">${formatCurrency(groupSubtotal, primaryDisplayCurrency)}</td><td class="py-2 px-4"></td>`;
                     groupSubtotal = 0;
                 }
                 currentGroup = assetGroup;
@@ -971,7 +1064,8 @@
                 row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
                 row.innerHTML = `
                     <td class="py-3 px-4 whitespace-nowrap text-gray-900">${asset.name}</td>
-                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${asset.group}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-700">${asset.group || 'Other'}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-500 text-sm">${asset.member || '—'}</td>
                     <td class="py-3 px-4 whitespace-nowrap text-gray-700">${formatCurrency(asset.value, asset.currency)}</td>
                     <td class="py-3 px-4 whitespace-nowrap text-gray-700">${formatCurrency(convertCurrency(asset.value, asset.currency, primaryDisplayCurrency), primaryDisplayCurrency)}</td>
                     <td class="py-3 px-4 whitespace-nowrap">${buildMiniAllocCell(asset)}</td>
@@ -997,15 +1091,17 @@
             if (currentGroup !== null) {
                 const sr = assetsTableBody.insertRow();
                 sr.className = 'bg-gray-100 font-semibold border-t-2 border-gray-300';
-                sr.innerHTML = `<td class="py-2 px-4 whitespace-nowrap text-right" colspan="2">Total ${currentGroup}:</td><td class="py-2 px-4 whitespace-nowrap text-gray-800" colspan="4">${formatCurrency(groupSubtotal, primaryDisplayCurrency)}</td><td class="py-2 px-4"></td>`;
+                sr.innerHTML = `<td class="py-2 px-4 whitespace-nowrap text-right" colspan="2">Total ${currentGroup}:</td><td class="py-2 px-4 whitespace-nowrap text-gray-800" colspan="5">${formatCurrency(groupSubtotal, primaryDisplayCurrency)}</td><td class="py-2 px-4"></td>`;
             }
         }
 
         function renderTransactionsTable() {
             transactionsTableBody.innerHTML = '';
-            if (transactionsData.length === 0) { noTransactionsMessage.classList.remove('hidden'); transactionsTableContainer.classList.add('hidden'); return; }
+            const filteredAssetIds = new Set(getFilteredAssets().map(a => a.id));
+            const filtered = activeMember ? transactionsData.filter(tx => filteredAssetIds.has(tx.assetId)) : transactionsData;
+            if (filtered.length === 0) { noTransactionsMessage.classList.remove('hidden'); transactionsTableContainer.classList.add('hidden'); return; }
             noTransactionsMessage.classList.add('hidden'); transactionsTableContainer.classList.remove('hidden');
-            transactionsData.forEach((tx, index) => {
+            filtered.forEach((tx, index) => {
                 const row = transactionsTableBody.insertRow();
                 row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
                 const assetCurrency = assetsData.find(a => a.id === tx.assetId)?.currency || primaryDisplayCurrency;
@@ -1022,16 +1118,33 @@
             });
         }
 
+        function getPrimaryMember() {
+            return familyMembersData.find(m => m.isPrimary === true) || null;
+        }
+
         function getAggregatedNetWorthData(snapshots, period) {
             if (snapshots.length === 0) return { labels: [], data: [] };
+            const primaryMember = getPrimaryMember();
             const map = new Map();
             snapshots.forEach(s => {
+                let value;
+                if (!activeMember) {
+                    value = s.totalNetWorth;
+                } else if (s.memberBreakdown && s.memberBreakdown[activeMember] !== undefined) {
+                    value = s.memberBreakdown[activeMember];
+                } else if (primaryMember && activeMember === primaryMember.name) {
+                    // Old snapshot without breakdown — attribute full history to primary member
+                    value = s.totalNetWorth;
+                } else {
+                    return; // skip: no data for this member in this snapshot
+                }
+                if (value === null || value === undefined) return;
                 const d = new Date(s.timestamp);
                 let key;
                 if (period === 'quarterly') key = `Q${Math.floor(d.getMonth()/3)+1} ${d.getFullYear()}`;
                 else if (period === 'yearly') key = d.getFullYear().toString();
                 else key = d.toLocaleString('default', { month: 'short', year: 'numeric' });
-                map.set(key, s.totalNetWorth);
+                map.set(key, value);
             });
             return { labels: Array.from(map.keys()), data: Array.from(map.values()) };
         }
@@ -1060,7 +1173,7 @@
 
         function renderAllocationChart() {
             const allocation = {};
-            assetsData.forEach(a => { const v = convertCurrency(a.value, a.currency, primaryDisplayCurrency); allocation[a.group] = (allocation[a.group] || 0) + v; });
+            getFilteredAssets().forEach(a => { const v = convertCurrency(a.value, a.currency, primaryDisplayCurrency); allocation[a.group] = (allocation[a.group] || 0) + v; });
             const allocationData = Object.keys(allocation).map(g => ({ name: g, value: allocation[g] }));
             if (allocationData.length === 0 || allocationData.every(d => d.value === 0)) {
                 noAllocationMessage.classList.remove('hidden'); allocationChartContainer.classList.add('hidden');
@@ -1089,7 +1202,7 @@
             const totals = {};
             let hasData = false;
 
-            assetsData.forEach(asset => {
+            getFilteredAssets().forEach(asset => {
                 const alloc = asset.allocation;
                 if (!alloc || alloc.skip) return; // skip excluded assets
                 const valueInPrimary = convertCurrency(asset.value, asset.currency, primaryDisplayCurrency);
@@ -1209,6 +1322,8 @@
             newAssetAllocationInput.value = '';
             renderAllocFeedback('', newAllocBar, newAllocTags);
             populateAccountGroupDropdowns();
+            populateMemberDropdowns();
+            newAssetMemberSelect.value = activeMember || '';
             showModal(addAssetModal, addAssetError);
         }
         function closeAddAssetModal() { hideModal(addAssetModal, addAssetError); }
@@ -1234,7 +1349,9 @@
             if (asset) {
                 editAssetNameInput.value = asset.name;
                 populateAccountGroupDropdowns();
+                populateMemberDropdowns();
                 editAssetGroupSelect.value = asset.group || '';
+                editAssetMemberSelect.value = asset.member || '';
                 const allocStr = allocObjectToString(asset.allocation);
                 editAssetAllocationInput.value = allocStr;
                 renderAllocFeedback(allocStr, editAllocBar, editAllocTags);
@@ -1293,6 +1410,7 @@
             const value = parseFloat(newAssetValueInput.value);
             const currency = newAssetCurrencySelect.value;
             const group = newAssetGroupSelect.value || 'Other';
+            const member = newAssetMemberSelect.value || null;
             const allocStr = newAssetAllocationInput.value.trim();
 
             if (!name || isNaN(value) || value <= 0) { addAssetError.textContent = "Please enter a valid asset name and a positive value."; addAssetError.classList.remove('hidden'); return; }
@@ -1306,7 +1424,7 @@
 
             try {
                 await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`), {
-                    name, value, currency, group,
+                    name, value, currency, group, member,
                     allocation: allocationObj,
                     createdAt: Date.now(), updatedAt: Date.now()
                 });
@@ -1344,6 +1462,7 @@
             if (!currentUser || !db || !currentEditAssetId) return;
             const name = editAssetNameInput.value.trim();
             const group = editAssetGroupSelect.value || 'Other';
+            const member = editAssetMemberSelect.value || null;
             const allocStr = editAssetAllocationInput.value.trim();
 
             if (!name) { editAssetError.textContent = "Asset name cannot be empty."; editAssetError.classList.remove('hidden'); return; }
@@ -1356,7 +1475,7 @@
             }
 
             try {
-                await updateDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`, currentEditAssetId), { name, group, allocation: allocationObj, updatedAt: Date.now() });
+                await updateDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`, currentEditAssetId), { name, group, member, allocation: allocationObj, updatedAt: Date.now() });
                 closeEditAssetModal();
             } catch (err) { editAssetError.textContent = "Failed: " + err.message; editAssetError.classList.remove('hidden'); }
         }
@@ -1378,11 +1497,23 @@
             );
         }
 
+        function computeMemberBreakdown() {
+            const breakdown = {};
+            familyMembersData.forEach(m => { breakdown[m.name] = 0; });
+            assetsData.forEach(a => {
+                if (a.member && breakdown[a.member] !== undefined) {
+                    breakdown[a.member] += convertCurrency(a.value, a.currency, primaryDisplayCurrency);
+                }
+            });
+            return breakdown;
+        }
+
         async function handleTakeSnapshot() {
             if (!currentUser || !db) return;
             let total = 0;
             assetsData.forEach(a => { total += convertCurrency(a.value, a.currency, primaryDisplayCurrency); });
-            try { await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/netWorthSnapshots`), { totalNetWorth: total, currency: primaryDisplayCurrency, timestamp: Date.now() }); }
+            const memberBreakdown = computeMemberBreakdown();
+            try { await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/netWorthSnapshots`), { totalNetWorth: total, currency: primaryDisplayCurrency, timestamp: Date.now(), memberBreakdown }); }
             catch (err) { showError("Failed to take snapshot: " + err.message); }
         }
 
@@ -1390,7 +1521,8 @@
             if (!currentUser || !db) return;
             let total = 0;
             assetsData.forEach(a => { total += convertCurrency(a.value, a.currency, primaryDisplayCurrency); });
-            try { await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/netWorthSnapshots`), { totalNetWorth: total, currency: primaryDisplayCurrency, timestamp: dateToSnapshot.getTime(), autoGenerated: true }); }
+            const memberBreakdown = computeMemberBreakdown();
+            try { await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/netWorthSnapshots`), { totalNetWorth: total, currency: primaryDisplayCurrency, timestamp: dateToSnapshot.getTime(), autoGenerated: true, memberBreakdown }); }
             catch (err) { console.error("Auto-snapshot failed:", err); }
         }
 
@@ -1406,6 +1538,137 @@
             if (eod(now) === eod(lastOfCurr) && !netWorthSnapshotsData.some(s => eod(new Date(s.timestamp)) === eod(lastOfCurr))) {
                 await takeAutoSnapshot(lastOfCurr);
             }
+        }
+
+        // ─── Family Members ───────────────────────────────────────────────────────
+        function renderFamilyFilterBar() {
+            memberFilterBar.innerHTML = '';
+            if (familyMembersData.length === 0) { memberFilterBar.classList.add('hidden'); return; }
+            memberFilterBar.classList.remove('hidden');
+
+            const primaryMember = getPrimaryMember();
+            const allChip = document.createElement('button');
+            allChip.className = 'member-chip' + (activeMember === null ? ' active' : '');
+            allChip.textContent = 'All';
+            allChip.addEventListener('click', () => { activeMember = null; refreshAllViews(); renderFamilyFilterBar(); });
+            memberFilterBar.appendChild(allChip);
+
+            familyMembersData.forEach(m => {
+                const chip = document.createElement('button');
+                chip.className = 'member-chip' + (activeMember === m.name ? ' active' : '');
+                chip.textContent = m.isPrimary ? '★ ' + m.name : m.name;
+                chip.title = m.isPrimary ? 'Primary member — inherits full net worth history' : '';
+                chip.addEventListener('click', () => { activeMember = m.name; refreshAllViews(); renderFamilyFilterBar(); });
+                memberFilterBar.appendChild(chip);
+            });
+        }
+
+        function refreshAllViews() {
+            updateNetWorthSummary();
+            renderAssetsTable();
+            renderAllocationChart();
+            renderAssetClassChart();
+            renderTransactionsTable();
+            renderNetWorthChart();
+        }
+
+        function populateMemberDropdowns() {
+            [newAssetMemberSelect, editAssetMemberSelect].forEach(sel => {
+                const current = sel.value;
+                sel.innerHTML = '<option value="">Unassigned</option>';
+                familyMembersData.forEach(m => {
+                    const o = document.createElement('option');
+                    o.value = m.name; o.textContent = m.name;
+                    sel.appendChild(o);
+                });
+                sel.value = current;
+            });
+        }
+
+        function renderFamilyMembersList() {
+            familyMembersTableBody.innerHTML = '';
+            if (familyMembersData.length === 0) { noMembersMessage.classList.remove('hidden'); familyMembersTable.classList.add('hidden'); return; }
+            noMembersMessage.classList.add('hidden'); familyMembersTable.classList.remove('hidden');
+            familyMembersData.forEach((member, index) => {
+                const isPrimary = member.isPrimary === true;
+                const row = familyMembersTableBody.insertRow();
+                row.className = `hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                row.innerHTML = `
+                    <td class="py-2 px-4 text-gray-900">
+                        ${member.name}
+                        ${isPrimary ? '<span class="ml-2 text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">Primary</span>' : ''}
+                    </td>
+                    <td class="py-2 px-4 flex items-center gap-2">
+                        ${!isPrimary ? `<button data-id="${member.id}" class="set-primary-btn bg-teal-500 hover:bg-teal-600 text-white px-2 py-1 rounded text-xs font-medium shadow-sm transition duration-200 ease-in-out transform hover:scale-105" title="Set as primary — inherits full net worth history">Set Primary</button>` : ''}
+                        <button data-id="${member.id}" data-name="${member.name}" class="edit-member-btn bg-yellow-500 hover:bg-yellow-600 text-white p-1 rounded-full text-xs shadow-sm transition duration-200 ease-in-out transform hover:scale-110" title="Edit Member">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button data-id="${member.id}" data-name="${member.name}" class="delete-member-btn bg-red-500 hover:bg-red-600 text-white p-1 rounded-full text-xs shadow-sm transition duration-200 ease-in-out transform hover:scale-110" title="Delete Member">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                    </td>`;
+                row.querySelector('.edit-member-btn').addEventListener('click', e => openEditMemberModal(e.currentTarget.dataset.id, e.currentTarget.dataset.name));
+                row.querySelector('.delete-member-btn').addEventListener('click', e => handleDeleteFamilyMember(e.currentTarget.dataset.id, e.currentTarget.dataset.name));
+                row.querySelector('.set-primary-btn')?.addEventListener('click', e => handleSetPrimaryMember(e.currentTarget.dataset.id));
+            });
+        }
+
+        async function handleSetPrimaryMember(memberId) {
+            if (!currentUser || !db) return;
+            const uid = currentUser.uid;
+            const base = `artifacts/${firebaseConfig.projectId}/users/${uid}/familyMembers`;
+            try {
+                // Clear isPrimary from any existing primary member
+                const current = familyMembersData.find(m => m.isPrimary);
+                if (current) await updateDoc(doc(db, base, current.id), { isPrimary: false });
+                await updateDoc(doc(db, base, memberId), { isPrimary: true });
+            } catch (err) { showError("Failed to set primary member: " + err.message); }
+        }
+
+        function openEditMemberModal(id, name) { currentEditMemberId = id; editMemberNameInput.value = name; showModal(editMemberModal, editMemberError); }
+        function closeEditMemberModal() { hideModal(editMemberModal, editMemberError); currentEditMemberId = null; editMemberNameInput.value = ''; }
+
+        async function handleAddFamilyMember() {
+            if (!currentUser || !db) return;
+            const name = newMemberNameInput.value.trim();
+            if (!name) { familyMemberError.textContent = "Name cannot be empty."; familyMemberError.classList.remove('hidden'); return; }
+            if (familyMembersData.some(m => m.name.toLowerCase() === name.toLowerCase())) { familyMemberError.textContent = "Member already exists."; familyMemberError.classList.remove('hidden'); return; }
+            try { await addDoc(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/familyMembers`), { name, createdAt: Date.now() }); newMemberNameInput.value = ''; familyMemberError.classList.add('hidden'); }
+            catch (err) { familyMemberError.textContent = "Failed: " + err.message; familyMemberError.classList.remove('hidden'); }
+        }
+
+        async function handleEditFamilyMemberSubmit() {
+            if (!currentUser || !db || !currentEditMemberId) return;
+            const newName = editMemberNameInput.value.trim();
+            if (!newName) { editMemberError.textContent = "Name cannot be empty."; editMemberError.classList.remove('hidden'); return; }
+            if (familyMembersData.some(m => m.id !== currentEditMemberId && m.name.toLowerCase() === newName.toLowerCase())) { editMemberError.textContent = "Another member with this name exists."; editMemberError.classList.remove('hidden'); return; }
+            const oldName = familyMembersData.find(m => m.id === currentEditMemberId)?.name;
+            try {
+                await updateDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/familyMembers`, currentEditMemberId), { name: newName });
+                // Update all assets that referenced the old name
+                if (oldName && oldName !== newName) {
+                    const q = query(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`), where("member", "==", oldName));
+                    (await getDocs(q)).forEach(async d => await updateDoc(d.ref, { member: newName }));
+                    if (activeMember === oldName) { activeMember = newName; renderFamilyFilterBar(); }
+                }
+                closeEditMemberModal();
+            } catch (err) { editMemberError.textContent = "Failed: " + err.message; editMemberError.classList.remove('hidden'); }
+        }
+
+        async function handleDeleteFamilyMember(memberId, memberName) {
+            if (!currentUser || !db) return;
+            confirmDelete(
+                'Delete family member?',
+                `"${memberName}" will be removed. Their assets will become unassigned.`,
+                async () => {
+                    try {
+                        await deleteDoc(doc(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/familyMembers`, memberId));
+                        const q = query(collection(db, `artifacts/${firebaseConfig.projectId}/users/${currentUser.uid}/assets`), where("member", "==", memberName));
+                        (await getDocs(q)).forEach(async d => await updateDoc(d.ref, { member: null }));
+                        if (activeMember === memberName) { activeMember = null; refreshAllViews(); }
+                    } catch (err) { showError("Failed to delete member: " + err.message); }
+                }
+            );
         }
 
         // ─── Group CRUD ───────────────────────────────────────────────────────────
@@ -1556,6 +1819,10 @@
         addGroupBtn.addEventListener('click', handleAddGroup);
         saveEditedGroupBtn.addEventListener('click', handleEditGroupSubmit);
         cancelEditGroupBtn.addEventListener('click', closeEditGroupModal);
+
+        addMemberBtn.addEventListener('click', handleAddFamilyMember);
+        saveEditedMemberBtn.addEventListener('click', handleEditFamilyMemberSubmit);
+        cancelEditMemberBtn.addEventListener('click', closeEditMemberModal);
 
         uploadHistoryCsvBtn.addEventListener('click', uploadHistoryFromCSV);
         exportHistoryCsvBtn.addEventListener('click', exportHistoryToCSV);
